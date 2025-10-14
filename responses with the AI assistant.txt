@@ -1,0 +1,45 @@
+me: Create program "Hello World" on C++
+AI:
+Of course! Here is a simple "Hello, World!" program in C++.
+
+C++
+
+#include <iostream>
+
+int main() {
+    // Print "Hello, World!" to the console
+    std::cout << "Hello, World!" << std::endl;
+    return 0;
+}
+## How It Works
+#include <iostream>: This line includes the input/output stream library, which lets you use std::cout to print text to the console.
+
+int main(): This is the main function where your program's execution begins. Every C++ program must have a main() function.
+
+std::cout << "Hello, World!" << std::endl;:
+
+std::cout is the standard output stream object (stands for character output).
+
+The << operator is used to send the string "Hello, World!" to std::cout.
+
+std::endl inserts a new line and tells the console that the line is finished.
+
+return 0;: This line signals that the program has finished successfully. A return value of 0 means no errors occurred.
+
+## How to Compile and Run
+Save the code in a file named hello.cpp (or any other name with a .cpp extension).
+
+Open your terminal or command prompt.
+
+Compile the code using a C++ compiler like g++.
+
+Bash
+
+g++ hello.cpp -o hello
+Run the compiled program.
+
+Bash
+
+./hello
+You should see the following output in your terminal:
+Hello, World!
