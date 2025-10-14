@@ -1,3 +1,4 @@
+﻿Stage 1:
 me: Create program "Hello World" on C++
 AI:
 Of course! Here is a simple "Hello, World!" program in C++.
@@ -43,3 +44,61 @@ Bash
 ./hello
 You should see the following output in your terminal:
 Hello, World!
+
+Stage 2:
+
+me:Generate a CMakeLists.txt for a C++17 project. The project name is "HelloWorld". It should build an executable named "hello" from the source file main.cpp.
+
+AI:
+Of course. Here is a CMakeLists.txt file for a C++17 project.
+
+CMake
+
+# Specify the minimum version of CMake required.
+cmake_minimum_required(VERSION 3.10)
+
+# Set the project name and language.
+project(HelloWorld CXX)
+
+# Set the C++ standard to C++17 and make it a requirement.
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# Add the executable target named "hello" from the source file "main.cpp".
+add_executable(hello main.cpp)
+## How It Works
+cmake_minimum_required(VERSION 3.10): This line ensures that you are using a version of CMake that understands the commands used in this file. Version 3.10 is a safe baseline for C++17 projects.
+
+project(HelloWorld CXX): This defines the name of your project as "HelloWorld" and specifies that it's a C++ project (indicated by CXX).
+
+set(CMAKE_CXX_STANDARD 17): This line tells CMake to use the C++17 standard when compiling your code.
+
+set(CMAKE_CXX_STANDARD_REQUIRED ON): This makes the C++17 standard a strict requirement. If the compiler doesn't support C++17, CMake will stop with an error.
+
+add_executable(hello main.cpp): This is the core command that creates your program. It defines an executable target named hello that will be built from the source file main.cpp.
+
+## How to Use
+Create a project directory and place this CMakeLists.txt file inside it, along with your main.cpp source file.
+
+HelloWorld/
+├── CMakeLists.txt
+└── main.cpp
+Create a build directory to keep your project folder clean.
+
+Bash
+
+mkdir build
+cd build
+Run CMake to generate the build files (like Makefiles or Visual Studio projects).
+
+Bash
+
+# The ".." points to the parent directory where your CMakeLists.txt is located.
+cmake ..
+Build your project.
+
+Bash
+
+# This command is cross-platform and works with any generated build system.
+cmake --build .
+After running these commands, you will find your executable named hello (or hello.exe on Windows) inside the build directory.
