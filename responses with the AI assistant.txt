@@ -418,3 +418,328 @@ Delete your build directory (out/build/x64-Debug) to clear the failed download a
 Regenerate the CMake cache. Visual Studio should do this automatically when you reopen the project or you can trigger it manually.
 
 After these steps, CMake will successfully download Google Test and your project will build correctly. 👍
+
+Stage 4:
+
+me:
+I need to update two files for my C++ project.
+
+First, update the existing `CMakeLists.txt` file. Replace the old `add_test()` command at the end of the file with `include(GoogleTest)` followed by `gtest_discover_tests(run_tests)`. This is to ensure tests are discovered and run correctly after the test executable is built.
+
+Second, create a new Windows batch script named `ci.bat`. This script must perform the following actions sequentially and stop immediately if any command fails:
+
+1. Print a message like "--- Starting CI Build and Test ---".
+
+2. Create a 'build' directory if it doesn't already exist.
+
+3. Change the current directory to 'build'.
+
+4. Configure the project by running CMake, specifically telling it to use the "Ninja" generator (`cmake .. -G "Ninja"`).
+
+5. Build the project using the command `cmake --build .`.
+
+6. Run the tests using CTest with the `--output-on-failure` flag.
+
+7. If all steps succeed, print a success message like "--- CI SUCCEEDED ---". If any step fails, print a failure message like "!!! CI FAILED !!!".
+
+AI:
+
+Of course. Here are the two files updated and created as you requested.
+
+## Updated CMakeLists.txt
+This version replaces the old add_test command with gtest_discover_tests, which automatically finds all tests in your run_tests executable. This is the modern and recommended way to integrate Google Test with CMake.
+
+CMake
+
+# Specify the minimum version of CMake required.
+cmake_minimum_required(VERSION 3.14)
+project(HelloWorld CXX)
+
+# Set the C++ standard to C++17 and make it a requirement.
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# ----------------- Main Executable -----------------
+# Add the source files for your main application.
+add_executable(hello main.cpp math_operations.cpp)
+
+
+# ----------------- Testing -----------------
+# Enable testing with CTest.
+enable_testing()
+
+# Include the FetchContent module to handle external dependencies.
+include(FetchContent)
+
+# Declare the Google Test dependency from its GitHub repository.
+FetchContent_Declare(
+  googletest
+  GIT_REPOSITORY https://github.com/google/googletest.git
+  GIT_TAG        main
+)
+
+# Make the dependency available to your project.
+FetchContent_MakeAvailable(googletest)
+
+# Add a new executable for your tests.
+add_executable(run_tests tests/unit_tests.cpp math_operations.cpp)
+
+# Link the test executable against Google Test.
+target_link_libraries(run_tests GTest::gtest_main)
+
+# Include the GoogleTest module and automatically discover tests.
+include(GoogleTest)
+gtest_discover_tests(run_tests)
+## New ci.bat Script
+This Windows batch script automates your build and test process. It will create a build directory, configure the project with Ninja, compile it, and run the tests. The script is designed to stop immediately if any step fails.
+
+Фрагмент коду
+
+@echo off
+setlocal
+
+echo --- Starting CI Build and Test ---
+echo.
+
+REM Create build directory if it doesn't exist
+if not exist build mkdir build
+if errorlevel 1 goto fail
+
+REM Change into build directory
+cd build
+if errorlevel 1 goto fail
+
+REM Configure the project using CMake and the Ninja generator
+echo [STEP] Configuring project...
+cmake .. -G "Ninja"
+if errorlevel 1 goto fail
+
+REM Build the project
+echo.
+echo [STEP] Building project...
+cmake --build .
+if errorlevel 1 goto fail
+
+REM Run the tests with CTest
+echo.
+echo [STEP] Running tests...
+ctest --output-on-failure
+if errorlevel 1 goto fail
+
+echo.
+echo --- CI SUCCEEDED ---
+goto end
+
+:fail
+echo.
+echo !!! CI FAILED !!!
+exit /b 1
+
+:end
+exit /b 0
+To run it, simply save this code as ci.bat in the root of your project directory and execute it from your command prompt.
+
+me:
+**********************************************************************
+** Visual Studio 2022 Developer PowerShell v17.14.15
+** Copyright (c) 2025 Microsoft Corporation
+**********************************************************************
+PS C:\Users\karpa\source\repos\bohdankarpaki\csad2526ki406bohdankarpa9> .\ci.bat
+--- Starting CI Build and Test ---
+
+[STEP] Configuring project...
+CMake Error: Error: generator : Ninja
+Does not match the generator used previously: Visual Studio 17 2022
+Either remove the CMakeCache.txt file and CMakeFiles directory or choose a different binary directory.
+
+!!! CI FAILED !!!
+PS C:\Users\karpa\source\repos\bohdankarpaki\csad2526ki406bohdankarpa9>
+
+AI:
+
+This error happens because your build directory already contains a project configured by Visual Studio. CMake is preventing you from overwriting that configuration with a different one (Ninja).
+
+## Why It Happened
+When you first ran CMake (likely from within Visual Studio), it generated project files for the "Visual Studio 17 2022" build system. Your ci.bat script is now trying to run cmake .. -G "Ninja", which tells CMake to generate files for the "Ninja" build system in that same directory. CMake sees the conflict and stops to prevent corrupting your build folder.
+
+## How to Fix It
+The solution is to start with a clean slate.
+
+Delete the build directory from your project folder. This will remove the old Visual Studio configuration (CMakeCache.txt and other files).
+
+Run the ci.bat script again.
+
+PowerShell
+
+.\ci.bat
+Now that the old configuration is gone, the script will successfully create a new build directory and configure it correctly using Ninja.
+
+me: PS C:\Users\karpa\source\repos\bohdankarpaki\csad2526ki406bohdankarpa9> .\ci.bat
+--- Starting CI Build and Test ---
+
+[STEP] Configuring project...
+-- The CXX compiler identification is MSVC 19.44.35217.0
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: C:/Program Files/Microsoft Visual Studio/2022/Enterprise/VC/Tools/MSVC/14.44.35207/bin/Hostx86/x86/cl.exe - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- The C compiler identification is MSVC 19.44.35217.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: C:/Program Files/Microsoft Visual Studio/2022/Enterprise/VC/Tools/MSVC/14.44.35207/bin/Hostx86/x86/cl.exe - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD
+-- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Failed
+-- Looking for pthread_create in pthreads
+-- Looking for pthread_create in pthreads - not found
+-- Looking for pthread_create in pthread
+-- Looking for pthread_create in pthread - not found
+-- Found Threads: TRUE
+-- Configuring done (32.4s)
+-- Generating done (0.3s)
+-- Build files have been written to: C:/Users/karpa/source/repos/bohdankarpaki/csad2526ki406bohdankarpa9/build
+
+[STEP] Building project...
+[17/17] Linking CXX executable run_tests.exe
+FAILED: run_tests.exe run_tests[1]_tests.cmake C:/Users/karpa/source/repos/bohdankarpaki/csad2526ki406bohdankarpa9/build/run_tests[1]_tests.cmake
+C:\WINDOWS\system32\cmd.exe /C "cd . && "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -E vs_link_exe --msvc-ver=1944 --intdir=CMakeFiles\run_tests.dir --rc=C:\PROGRA~2\WI3CF2~1\10\bin\100261~1.0\x86\rc.exe --mt=C:\PROGRA~2\WI3CF2~1\10\bin\100261~1.0\x86\mt.exe --manifests  -- C:\PROGRA~1\MICROS~4\2022\ENTERP~1\VC\Tools\MSVC\1444~1.352\bin\Hostx86\x86\link.exe /nologo CMakeFiles\run_tests.dir\tests\unit_tests.cpp.obj CMakeFiles\run_tests.dir\math_operations.cpp.obj  /out:run_tests.exe /implib:run_tests.lib /pdb:run_tests.pdb /version:0.0 /machine:X86 /debug /INCREMENTAL /subsystem:console  lib\gtest_main.lib  lib\gtest.lib  kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib && C:\WINDOWS\system32\cmd.exe /C "cd /D C:\Users\karpa\source\repos\bohdankarpaki\csad2526ki406bohdankarpa9\build && "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -D TEST_TARGET=run_tests -D TEST_EXECUTABLE=C:/Users/karpa/source/repos/bohdankarpaki/csad2526ki406bohdankarpa9/build/run_tests.exe -D TEST_EXECUTOR= -D TEST_WORKING_DIR=C:/Users/karpa/source/repos/bohdankarpaki/csad2526ki406bohdankarpa9/build -D TEST_EXTRA_ARGS= -D TEST_PROPERTIES= -D TEST_PREFIX= -D TEST_SUFFIX= -D TEST_FILTER= -D NO_PRETTY_TYPES=FALSE -D NO_PRETTY_VALUES=FALSE -D TEST_LIST=run_tests_TESTS -D CTEST_FILE=C:/Users/karpa/source/repos/bohdankarpaki/csad2526ki406bohdankarpa9/build/run_tests[1]_tests.cmake -D TEST_DISCOVERY_TIMEOUT=5 -D TEST_DISCOVERY_EXTRA_ARGS= -D TEST_XML_OUTPUT_DIR= -P "C:/Program Files/Microsoft Visual Studio/2022/Enterprise/Common7/IDE/CommonExtensions/Microsoft/CMake/CMake/share/cmake-3.31/Modules/GoogleTestAddTests.cmake"""
+LINK Pass 1: command "C:\PROGRA~1\MICROS~4\2022\ENTERP~1\VC\Tools\MSVC\1444~1.352\bin\Hostx86\x86\link.exe /nologo CMakeFiles\run_tests.dir\tests\unit_tests.cpp.obj CMakeFiles\run_tests.dir\math_operations.cpp.obj /out:run_tests.exe /implib:run_tests.lib /pdb:run_tests.pdb /version:0.0 /machine:X86 /debug /INCREMENTAL /subsystem:console lib\gtest_main.lib lib\gtest.lib kernel32.lib user32.lib gdi32.lib winspool.lib shell32.lib ole32.lib oleaut32.lib uuid.lib comdlg32.lib advapi32.lib /MANIFEST /MANIFESTFILE:CMakeFiles\run_tests.dir/intermediate.manifest CMakeFiles\run_tests.dir/manifest.res" failed (exit code 1169) with the following output:
+gtest.lib(gtest-all.cc.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MTd_StaticDebug' doesn't match value 'MDd_DynamicDebug' in unit_tests.cpp.obj
+msvcprtd.lib(MSVCP140D.dll) : error LNK2005: "public: struct _Cvtvec __thiscall std::_Locinfo::_Getcvt(void)const " (?_Getcvt@_Locinfo@std@@QBE?AU_Cvtvec@@XZ) already defined in gtest.lib(gtest-all.cc.obj)
+msvcprtd.lib(MSVCP140D.dll) : error LNK2005: "public: bool __thiscall std::ios_base::good(void)const " (?good@ios_base@std@@QBE_NXZ) already defined in gtest.lib(gtest-all.cc.obj)
+msvcprtd.lib(MSVCP140D.dll) : error LNK2005: "public: int __thiscall std::ios_base::flags(void)const " (?flags@ios_base@std@@QBEHXZ) already defined in gtest.lib(gtest-all.cc.obj)
+msvcprtd.lib(MSVCP140D.dll) : error LNK2005: "public: __int64 __thiscall std::ios_base::width(void)const " (?width@ios_base@std@@QBE_JXZ) already defined in gtest.lib(gtest-all.cc.obj)
+msvcprtd.lib(MSVCP140D.dll) : error LNK2005: "public: __int64 __thiscall std::ios_base::width(__int64)" (?width@ios_base@std@@QAE_J_J@Z) already defined in gtest.lib(gtest-all.cc.obj)
+msvcprtd.lib(MSVCP140D.dll) : error LNK2005: "protected: __thiscall std::basic_streambuf<char,struct std::char_traits<char> >::basic_streambuf<char,struct std::char_traits<char> >(void)" (??0?$basic_streambuf@DU?$char_traits@D@std@@@std@@IAE@XZ) already defined in gtest.lib(gtest-all.cc.obj)
+msvcprtd.lib(MSVCP140D.dll) : error LNK2005: "public: virtual __thiscall std::basic_streambuf<char,struct std::char_traits<char> >::~basic_streambuf<char,struct std::char_traits<char> >(void)" (??1?$basic_streambuf@DU?$char_traits@D@std@@@std@@UAE@XZ) already defined in gtest.lib(gtest-all.cc.obj)
+msvcprtd.lib(MSVCP140D.dll) : error LNK2005: "public: int __thiscall std::basic_streambuf<char,struct std::char_traits<char> >::sputc(char)" (?sputc@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QAEHD@Z) already defined in gtest.lib(gtest-all.cc.obj)
+msvcprtd.lib(MSVCP140D.dll) : error LNK2005: "public: __int64 __thiscall std::basic_streambuf<char,struct std::char_traits<char> >::sputn(char const *,__int64)" (?sputn@?$basic_streambuf@DU?$char_traits@D@std@@@std@@QAE_JPBD_J@Z) already defined in gtest.lib(gtest-all.cc.obj)
+msvcprtd.lib(MSVCP140D.dll) : error LNK2005: "protected: char * __thiscall std::basic_streambuf<char,struct std::char_traits<char> >::eback(void)const " (?eback@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IBEPADXZ) already defined in gtest.lib(gtest-all.cc.obj)
+msvcprtd.lib(MSVCP140D.dll) : error LNK2005: "protected: char * __thiscall std::basic_streambuf<char,struct std::char_traits<char> >::gptr(void)const " (?gptr@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IBEPADXZ) already defined in gtest.lib(gtest-all.cc.obj)
+msvcprtd.lib(MSVCP140D.dll) : error LNK2005: "protected: char * __thiscall std::basic_streambuf<char,struct std::char_traits<char> >::pbase(void)const " (?pbase@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IBEPADXZ) already defined in gtest.lib(gtest-all.cc.obj)
+msvcprtd.lib(MSVCP140D.dll) : error LNK2005: "protected: char * __thiscall std::basic_streambuf<char,struct std::char_traits<char> >::pptr(void)const " (?pptr@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IBEPADXZ) already defined in gtest.lib(gtest-all.cc.obj)
+msvcprtd.lib(MSVCP140D.dll) : error LNK2005: "protected: char * __thiscall std::basic_streambuf<char,struct std::char_traits<char> >::egptr(void)const " (?egptr@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IBEPADXZ) already defined in gtest.lib(gtest-all.cc.obj)
+msvcprtd.lib(MSVCP140D.dll) : error LNK2005: "protected: void __thiscall std::basic_streambuf<char,struct std::char_traits<char> >::gbump(int)" (?gbump@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IAEXH@Z) already defined in gtest.lib(gtest-all.cc.obj)
+msvcprtd.lib(MSVCP140D.dll) : error LNK2005: "protected: void __thiscall std::basic_streambuf<char,struct std::char_traits<char> >::setg(char *,char *,char *)" (?setg@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IAEXPAD00@Z) already defined in gtest.lib(gtest-all.cc.obj)
+msvcprtd.lib(MSVCP140D.dll) : error LNK2005: "protected: char * __thiscall std::basic_streambuf<char,struct std::char_traits<char> >::epptr(void)const " (?epptr@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IBEPADXZ) already defined in gtest.lib(gtest-all.cc.obj)
+msvcprtd.lib(MSVCP140D.dll) : error LNK2005: "protected: void __thiscall std::basic_streambuf<char,struct std::char_traits<char> >::setp(char *,char *)" (?setp@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IAEXPAD0@Z) already defined in gtest.lib(gtest-all.cc.obj)
+msvcprtd.lib(MSVCP140D.dll) : error LNK2005: "protected: void __thiscall std::basic_streambuf<char,struct std::char_traits<char> >::setp(char *,char *,char *)" (?setp@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IAEXPAD00@Z) already defined in gtest.lib(gtest-all.cc.obj)
+msvcprtd.lib(MSVCP140D.dll) : error LNK2005: "protected: char * __thiscall std::basic_streambuf<char,struct std::char_traits<char> >::_Pninc(void)" (?_Pninc@?$basic_streambuf@DU?$char_traits@D@std@@@std@@IAEPADXZ) already defined in gtest.lib(gtest-all.cc.obj)
+msvcprtd.lib(MSVCP140D.dll) : error LNK2005: "public: virtual __thiscall std::basic_ios<char,struct std::char_traits<char> >::~basic_ios<char,struct std::char_traits<char> >(void)" (??1?$basic_ios@DU?$char_traits@D@std@@@std@@UAE@XZ) already defined in gtest.lib(gtest-all.cc.obj)
+msvcprtd.lib(MSVCP140D.dll) : error LNK2005: "public: void __thiscall std::basic_ios<char,struct std::char_traits<char> >::setstate(int,bool)" (?setstate@?$basic_ios@DU?$char_traits@D@std@@@std@@QAEXH_N@Z) already defined in gtest.lib(gtest-all.cc.obj)
+msvcprtd.lib(MSVCP140D.dll) : error LNK2005: "public: class std::basic_ostream<char,struct std::char_traits<char> > * __thiscall std::basic_ios<char,struct std::char_traits<char> >::tie(void)const " (?tie@?$basic_ios@DU?$char_traits@D@std@@@std@@QBEPAV?$basic_ostream@DU?$char_traits@D@std@@@2@XZ) already defined in gtest.lib(gtest-all.cc.obj)
+msvcprtd.lib(MSVCP140D.dll) : error LNK2005: "public: class std::basic_streambuf<char,struct std::char_traits<char> > * __thiscall std::basic_ios<char,struct std::char_traits<char> >::rdbuf(void)const " (?rdbuf@?$basic_ios@DU?$char_traits@D@std@@@std@@QBEPAV?$basic_streambuf@DU?$char_traits@D@std@@@2@XZ) already defined in gtest.lib(gtest-all.cc.obj)
+msvcprtd.lib(MSVCP140D.dll) : error LNK2005: "public: char __thiscall std::basic_ios<char,struct std::char_traits<char> >::fill(void)const " (?fill@?$basic_ios@DU?$char_traits@D@std@@@std@@QBEDXZ) already defined in gtest.lib(gtest-all.cc.obj)
+msvcprtd.lib(MSVCP140D.dll) : error LNK2005: "protected: __thiscall std::basic_ios<char,struct std::char_traits<char> >::basic_ios<char,struct std::char_traits<char> >(void)" (??0?$basic_ios@DU?$char_traits@D@std@@@std@@IAE@XZ) already defined in gtest.lib(gtest-all.cc.obj)
+msvcprtd.lib(MSVCP140D.dll) : error LNK2005: "public: void __thiscall std::basic_ostream<char,struct std::char_traits<char> >::_Osfx(void)" (?_Osfx@?$basic_ostream@DU?$char_traits@D@std@@@std@@QAEXXZ) already defined in gtest.lib(gtest-all.cc.obj)
+msvcprtd.lib(MSVCP140D.dll) : error LNK2005: "public: class std::basic_ostream<char,struct std::char_traits<char> > & __thiscall std::basic_ostream<char,struct std::char_traits<char> >::operator<<(int)" (??6?$basic_ostream@DU?$char_traits@D@std@@@std@@QAEAAV01@H@Z) already defined in gtest.lib(gtest-all.cc.obj)
+msvcprtd.lib(MSVCP140D.dll) : error LNK2005: "public: class std::basic_ostream<char,struct std::char_traits<char> > & __thiscall std::basic_ostream<char,struct std::char_traits<char> >::flush(void)" (?flush@?$basic_ostream@DU?$char_traits@D@std@@@std@@QAEAAV12@XZ) already defined in gtest.lib(gtest-all.cc.obj)
+msvcprtd.lib(MSVCP140D.dll) : error LNK2005: "public: __thiscall std::basic_iostream<char,struct std::char_traits<char> >::basic_iostream<char,struct std::char_traits<char> >(class std::basic_streambuf<char,struct std::char_traits<char> > *)" (??0?$basic_iostream@DU?$char_traits@D@std@@@std@@QAE@PAV?$basic_streambuf@DU?$char_traits@D@std@@@1@@Z) already defined in gtest.lib(gtest-all.cc.obj)
+msvcprtd.lib(MSVCP140D.dll) : error LNK2005: "public: virtual __thiscall std::basic_iostream<char,struct std::char_traits<char> >::~basic_iostream<char,struct std::char_traits<char> >(void)" (??1?$basic_iostream@DU?$char_traits@D@std@@@std@@UAE@XZ) already defined in gtest.lib(gtest-all.cc.obj)
+libcpmtd.lib(locale0.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MTd_StaticDebug' doesn't match value 'MDd_DynamicDebug' in unit_tests.cpp.obj
+libcpmtd.lib(locale0.obj) : error LNK2005: "void __cdecl std::_Facet_Register(class std::_Facet_base *)" (?_Facet_Register@std@@YAXPAV_Facet_base@1@@Z) already defined in msvcprtd.lib(locale0_implib.obj)
+libcpmtd.lib(locale0.obj) : error LNK2005: "private: static class std::locale::_Locimp * __cdecl std::locale::_Getgloballocale(void)" (?_Getgloballocale@locale@std@@CAPAV_Locimp@12@XZ) already defined in msvcprtd.lib(MSVCP140D.dll)
+libcpmtd.lib(locale0.obj) : error LNK2005: "private: static class std::locale::_Locimp * __cdecl std::locale::_Init(bool)" (?_Init@locale@std@@CAPAV_Locimp@12@_N@Z) already defined in msvcprtd.lib(MSVCP140D.dll)
+libcpmtd.lib(locale0.obj) : error LNK2005: "public: static void __cdecl std::_Locinfo::_Locinfo_ctor(class std::_Locinfo *,char const *)" (?_Locinfo_ctor@_Locinfo@std@@SAXPAV12@PBD@Z) already defined in msvcprtd.lib(MSVCP140D.dll)
+libcpmtd.lib(locale0.obj) : error LNK2005: "public: static void __cdecl std::_Locinfo::_Locinfo_dtor(class std::_Locinfo *)" (?_Locinfo_dtor@_Locinfo@std@@SAXPAV12@@Z) already defined in msvcprtd.lib(MSVCP140D.dll)
+libcpmtd.lib(locale0.obj) : error LNK2005: "private: static class std::locale::_Locimp * __cdecl std::locale::_Locimp::_New_Locimp(class std::locale::_Locimp const &)" (?_New_Locimp@_Locimp@locale@std@@CAPAV123@ABV123@@Z) already defined in msvcprtd.lib(MSVCP140D.dll)
+libcpmtd.lib(cout.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MTd_StaticDebug' doesn't match value 'MDd_DynamicDebug' in unit_tests.cpp.obj
+libcpmtd.lib(cerr.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MTd_StaticDebug' doesn't match value 'MDd_DynamicDebug' in unit_tests.cpp.obj
+libcpmtd.lib(locale.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MTd_StaticDebug' doesn't match value 'MDd_DynamicDebug' in unit_tests.cpp.obj
+libcpmtd.lib(locale.obj) : error LNK2005: "private: static void __cdecl std::locale::_Locimp::_Locimp_Addfac(class std::locale::_Locimp *,class std::locale::facet *,unsigned int)" (?_Locimp_Addfac@_Locimp@locale@std@@CAXPAV123@PAVfacet@23@I@Z) already defined in msvcprtd.lib(MSVCP140D.dll)
+libcpmtd.lib(iosptrs.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MTd_StaticDebug' doesn't match value 'MDd_DynamicDebug' in unit_tests.cpp.obj
+libcpmtd.lib(xlock.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MTd_StaticDebug' doesn't match value 'MDd_DynamicDebug' in unit_tests.cpp.obj
+libcpmtd.lib(xlock.obj) : error LNK2005: "public: __thiscall std::_Lockit::_Lockit(int)" (??0_Lockit@std@@QAE@H@Z) already defined in msvcprtd.lib(MSVCP140D.dll)
+libcpmtd.lib(xlock.obj) : error LNK2005: "public: __thiscall std::_Lockit::~_Lockit(void)" (??1_Lockit@std@@QAE@XZ) already defined in msvcprtd.lib(MSVCP140D.dll)
+libcpmtd.lib(wlocale.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MTd_StaticDebug' doesn't match value 'MDd_DynamicDebug' in unit_tests.cpp.obj
+libcpmtd.lib(wlocale.obj) : error LNK2005: "public: unsigned short const * __thiscall std::_Locinfo::_W_Getdays(void)const " (?_W_Getdays@_Locinfo@std@@QBEPBGXZ) already defined in msvcprtd.lib(MSVCP140D.dll)
+libcpmtd.lib(wlocale.obj) : error LNK2005: "public: unsigned short const * __thiscall std::_Locinfo::_W_Getmonths(void)const " (?_W_Getmonths@_Locinfo@std@@QBEPBGXZ) already defined in msvcprtd.lib(MSVCP140D.dll)
+libcpmtd.lib(xlocale.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MTd_StaticDebug' doesn't match value 'MDd_DynamicDebug' in unit_tests.cpp.obj
+libcpmtd.lib(xstol.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MTd_StaticDebug' doesn't match value 'MDd_DynamicDebug' in unit_tests.cpp.obj
+libcpmtd.lib(xstoul.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MTd_StaticDebug' doesn't match value 'MDd_DynamicDebug' in unit_tests.cpp.obj
+libcpmtd.lib(xstoll.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MTd_StaticDebug' doesn't match value 'MDd_DynamicDebug' in unit_tests.cpp.obj
+libcpmtd.lib(xstoull.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MTd_StaticDebug' doesn't match value 'MDd_DynamicDebug' in unit_tests.cpp.obj
+libcpmtd.lib(xmtx.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MTd_StaticDebug' doesn't match value 'MDd_DynamicDebug' in unit_tests.cpp.obj
+libcpmtd.lib(xstrcoll.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MTd_StaticDebug' doesn't match value 'MDd_DynamicDebug' in unit_tests.cpp.obj
+libcpmtd.lib(xdateord.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MTd_StaticDebug' doesn't match value 'MDd_DynamicDebug' in unit_tests.cpp.obj
+libcpmtd.lib(xwcscoll.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MTd_StaticDebug' doesn't match value 'MDd_DynamicDebug' in unit_tests.cpp.obj
+libcpmtd.lib(xwcsxfrm.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MTd_StaticDebug' doesn't match value 'MDd_DynamicDebug' in unit_tests.cpp.obj
+libcpmtd.lib(xgetwctype.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MTd_StaticDebug' doesn't match value 'MDd_DynamicDebug' in unit_tests.cpp.obj
+libcpmtd.lib(xtowlower.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MTd_StaticDebug' doesn't match value 'MDd_DynamicDebug' in unit_tests.cpp.obj
+libcpmtd.lib(xtowupper.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MTd_StaticDebug' doesn't match value 'MDd_DynamicDebug' in unit_tests.cpp.obj
+libcpmtd.lib(xstrxfrm.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MTd_StaticDebug' doesn't match value 'MDd_DynamicDebug' in unit_tests.cpp.obj
+libcpmtd.lib(StlCompareStringA.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MTd_StaticDebug' doesn't match value 'MDd_DynamicDebug' in unit_tests.cpp.obj
+libcpmtd.lib(StlCompareStringW.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MTd_StaticDebug' doesn't match value 'MDd_DynamicDebug' in unit_tests.cpp.obj
+libcpmtd.lib(StlLCMapStringW.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MTd_StaticDebug' doesn't match value 'MDd_DynamicDebug' in unit_tests.cpp.obj
+libcpmtd.lib(StlLCMapStringA.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MTd_StaticDebug' doesn't match value 'MDd_DynamicDebug' in unit_tests.cpp.obj
+gtest_main.lib(gtest_main.cc.obj) : error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MTd_StaticDebug' doesn't match value 'MDd_DynamicDebug' in unit_tests.cpp.obj
+LINK : warning LNK4098: defaultlib 'LIBCMTD' conflicts with use of other libs; use /NODEFAULTLIB:library
+run_tests.exe : fatal error LNK1169: one or more multiply defined symbols found
+ninja: build stopped: subcommand failed.
+
+!!! CI FAILED !!!
+PS C:\Users\karpa\source\repos\bohdankarpaki\csad2526ki406bohdankarpa9>
+
+AI:
+This is a very common linker error on Windows. The build succeeded in compiling your code but failed at the final step of linking everything together.
+
+The key error message is:
+error LNK2038: mismatch detected for 'RuntimeLibrary': value 'MTd_StaticDebug' doesn't match value 'MDd_DynamicDebug'
+
+## The Problem Explained
+This error means your project and the Google Test library were compiled with incompatible settings for the C++ Runtime Library. Think of the Runtime Library as a foundational toolkit for C++.
+
+MDd_DynamicDebug: Your code (unit_tests.cpp) was compiled to use the dynamic debug library. This means it expects to find the C++ toolkit in a shared system .dll file at runtime. This is the default for most CMake projects on Windows.
+
+MTd_StaticDebug: By default, FetchContent built Google Test to use the static debug library. This means it compiled the C++ toolkit's code directly into gtest.lib.
+
+You can't mix these two approaches. The linker sees two different versions of the C++ standard library and stops with "multiply defined symbols" errors because it doesn't know which one to use.
+
+## The Solution
+The fix is to tell CMake to build Google Test using the same dynamic runtime library that your project uses. You can do this by setting a specific variable before you make Google Test available.
+
+Update the "Testing" section of your CMakeLists.txt as shown below.
+
+CMake
+
+# ----------------- Testing -----------------
+# Enable testing with CTest.
+enable_testing()
+
+# Include the FetchContent module to handle external dependencies.
+include(FetchContent)
+
+# Declare the Google Test dependency from its GitHub repository.
+FetchContent_Declare(
+  googletest
+  GIT_REPOSITORY https://github.com/google/googletest.git
+  GIT_TAG        main
+)
+
+# ADD THIS LINE to force GTest to use the same runtime library as your project.
+set(gtest_force_shared_crt ON)
+
+# Make the dependency available to your project.
+FetchContent_MakeAvailable(googletest)
+
+# Add a new executable for your tests.
+add_executable(run_tests tests/unit_tests.cpp math_operations.cpp)
+
+# Link the test executable against Google Test.
+target_link_libraries(run_tests GTest::gtest_main)
+
+# Include the GoogleTest module and automatically discover tests.
+include(GoogleTest)
+gtest_discover_tests(run_tests)
+## What to Do Next
+Just like before, you need to start with a clean build directory to ensure the old, incorrectly compiled libraries are gone.
+
+Save your updated CMakeLists.txt.
+
+Delete the build directory completely.
+
+Run .\\ci.bat again.
+
+This will resolve the runtime library mismatch, and your project should now build and test successfully. ✅
