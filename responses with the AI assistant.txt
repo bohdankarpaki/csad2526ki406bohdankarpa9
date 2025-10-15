@@ -743,3 +743,78 @@ Delete the build directory completely.
 Run .\\ci.bat again.
 
 This will resolve the runtime library mismatch, and your project should now build and test successfully. ✅
+
+me:
+Create a bash script named `ci.sh` for a Linux and macOS environment. The script must perform the following actions sequentially and exit immediately if any command fails:
+
+1.  Print a starting message like "--- Starting CI Build and Test ---".
+2.  Create a 'build' directory if it doesn't already exist.
+3.  Change the current directory to 'build'.
+4.  Configure the project by running CMake, and it must use the "Ninja" generator (`cmake .. -G "Ninja"`).
+5.  Build the project using the command `cmake --build .`.
+6.  Run the tests using CTest, ensuring that the output from failed tests is displayed (`ctest --output-on-failure`).
+7.  If all steps succeed, print a final success message like "--- CI SUCCEEDED ---".
+
+AI:
+Of course. Here is the ci.sh bash script for Linux and macOS.
+
+Bash
+
+#!/bin/bash
+
+# Exit immediately if a command exits with a non-zero status.
+set -e
+
+echo "--- Starting CI Build and Test ---"
+echo
+
+# 1. Create the build directory if it doesn't exist.
+# The -p flag prevents an error if the directory already exists.
+mkdir -p build
+
+# 2. Change into the build directory.
+cd build
+
+# 3. Configure the project using CMake and the Ninja generator.
+echo "[STEP] Configuring project..."
+cmake .. -G "Ninja"
+
+# 4. Build the project.
+echo
+echo "[STEP] Building project..."
+cmake --build .
+
+# 5. Run the tests with CTest.
+echo
+echo "[STEP] Running tests..."
+ctest --output-on-failure
+
+# 6. If all previous commands succeeded, print the success message.
+echo
+echo "--- CI SUCCEEDED ---"
+## How It Works
+#!/bin/bash: This is called a "shebang." It tells the system to execute this script using the Bash interpreter.
+
+set -e: This is the most important command for error handling. It ensures that the script will exit immediately if any command fails (returns a non-zero exit code), which fulfills your requirement to stop on failure.
+
+mkdir -p build: Creates the build directory. The -p flag means "make parent directories as needed," and it also prevents the command from failing if the build directory already exists.
+
+cd build: Changes the current working directory to build.
+
+cmake, ctest: These are the standard commands you requested to configure, build, and test the project.
+
+echo: Prints the status messages to the terminal.
+
+## How to Use
+Save the code in a file named ci.sh in the root of your project.
+
+Make the script executable. In your terminal, run the following command:
+
+Bash
+
+chmod +x ci.sh
+Run the script from your project's root directory:
+
+Bash
+
+./ci.sh
