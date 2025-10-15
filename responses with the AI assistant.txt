@@ -102,3 +102,319 @@ Bash
 # This command is cross-platform and works with any generated build system.
 cmake --build .
 After running these commands, you will find your executable named hello (or hello.exe on Windows) inside the build directory.
+
+Stage 3:
+
+me: Create math_operations.h a C++ header file with a declaration for a function named 'add' that takes two integers and returns their sum.
+
+
+AI:
+Of course. Here is the content for the math_operations.h header file.
+
+C++
+
+#ifndef MATH_OPERATIONS_H
+#define MATH_OPERATIONS_H
+
+/**
+ * @brief Adds two integers together.
+ * * @param a The first integer.
+ * @param b The second integer.
+ * @return The sum of the two integers.
+ */
+int add(int a, int b);
+
+#endif // MATH_OPERATIONS_H
+## Explanation
+#ifndef MATH_OPERATIONS_H, #define MATH_OPERATIONS_H, and #endif // MATH_OPERATIONS_H: These are header guards. They prevent the contents of this file from being included more than once in the same compilation unit, which would cause redefinition errors.
+
+int add(int a, int b);: This is the function declaration (also known as a function prototype). It tells the compiler that a function named add exists, which takes two int parameters and returns an int. The actual implementation (the function's body) would be defined in a corresponding .cpp file.
+
+me: Create math_operations.cpp the implementation for the 'add' function declared in math_operations.h.
+
+AI:
+Of course. Here's the C++ implementation file math_operations.cpp for the add function.
+
+C++
+
+#include "math_operations.h"
+
+int add(int a, int b) {
+    return a + b;
+}
+## Explanation
+#include "math_operations.h": This line includes the header file you created earlier. Using double quotes (" ") tells the compiler to look for the file in the current project directory first. This makes the declaration of the add function visible to this .cpp file, allowing the compiler to verify that the function's definition matches its declaration.
+
+int add(int a, int b): This is the function definition. It specifies the return type (int), the function name (add), and the parameters it accepts (int a, int b).
+
+{ return a + b; }: This is the function body. It contains the code that executes when the function is called. In this case, it simply calculates the sum of a and b and returns the result.
+
+## How to Use in Your Project
+To use this new function in your "HelloWorld" project, you'll need to update both your main.cpp and CMakeLists.txt files.
+
+Update your main.cpp to call the new function.
+
+C++
+
+#include <iostream>
+#include "math_operations.h" // Include your new header
+
+int main() {
+    int result = add(5, 3);
+    std::cout << "Hello, World!" << std::endl;
+    std::cout << "The result of 5 + 3 is: " << result << std::endl;
+    return 0;
+}
+Update your CMakeLists.txt to include both source files.
+
+CMake
+
+cmake_minimum_required(VERSION 3.10)
+project(HelloWorld CXX)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# Add both source files to the executable
+add_executable(hello main.cpp math_operations.cpp)
+Now, when you run cmake .. and cmake --build . from your build directory, CMake will compile both .cpp files and link them together to create the final hello executable.
+
+me: Create a tests directory.
+
+
+
+Inside the tests directory, create a file called unit_tests.cpp
+
+Write unit_tests.cpp a unit test for the 'add' function from 'math_operations.h' using the Google Test framework. Include a test case 'BasicAddition' to check if 2 + 3 equals 5.
+
+AI:
+Of course. Here is the content for tests/unit_tests.cpp, which contains a unit test for your add function using the Google Test framework.
+
+C++
+
+#include "gtest/gtest.h"
+#include "../math_operations.h" // Include the header for the function we are testing
+
+// Test suite for MathOperations
+// TEST(TestSuiteName, TestCaseName)
+TEST(MathOperationsTest, BasicAddition) {
+    // Check if add(2, 3) returns 5.
+    ASSERT_EQ(add(2, 3), 5);
+}
+## Explanation
+#include "gtest/gtest.h": This line includes the main header file for the Google Test framework, giving you access to all its testing macros and functions.
+
+#include "../math_operations.h": This includes your add function's declaration. The ../ path is used to go up one level from the tests directory to find math_operations.h in the project's root directory.
+
+TEST(MathOperationsTest, BasicAddition): This is a Google Test macro that defines a test.
+
+MathOperationsTest: This is the name of the Test Suite. It's a way to group related tests together.
+
+BasicAddition: This is the name of the specific Test Case.
+
+ASSERT_EQ(add(2, 3), 5);: This is an assertion. It checks if its two arguments are equal.
+
+add(2, 3) is the actual value produced by your code.
+
+5 is the expected value.
+
+If the values are not equal, the test will fail and immediately stop. If you wanted the test to continue even after a failure, you could use EXPECT_EQ.
+
+## Next Steps: Updating CMake
+To build and run these tests, you'll need to integrate Google Test into your project and tell CMake to build a separate test executable. Here's how you can update your CMakeLists.txt:
+
+CMake
+
+cmake_minimum_required(VERSION 3.14) # GTest needs a slightly newer version
+project(HelloWorld CXX)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# ----------------- Main Executable -----------------
+# Add the source files for your main application
+add_executable(hello main.cpp math_operations.cpp)
+
+
+# ----------------- Testing -----------------
+# Enable testing with CTest
+enable_testing()
+
+# Find the GTest package. CMake will download it if not found.
+find_package(GTest REQUIRED)
+
+# Add a new executable for your tests
+add_executable(run_tests tests/unit_tests.cpp math_operations.cpp)
+
+# Link the test executable against Google Test
+target_link_libraries(run_tests GTest::gtest_main)
+
+# Add the test to CTest
+add_test(NAME MathTests COMMAND run_tests)
+With this setup, you can run your tests from the build directory using the command:
+
+Bash
+
+ctest
+
+me: 1> CMake generation started for default configuration: 'x64-Debug'.
+1> Command line: "C:\WINDOWS\system32\cmd.exe" /c "%SYSTEMROOT%\System32\chcp.com 65001 >NUL && "C:\PROGRAM FILES\MICROSOFT VISUAL STUDIO\2022\ENTERPRISE\COMMON7\IDE\COMMONEXTENSIONS\MICROSOFT\CMAKE\CMake\bin\cmake.exe"  -G "Ninja"  -DCMAKE_BUILD_TYPE:STRING="Debug" -DCMAKE_INSTALL_PREFIX:PATH="C:\Users\karpa\source\repos\bohdankarpaki\csad2526ki406bohdankarpa9\out\install\x64-Debug" -DCMAKE_C_COMPILER:FILEPATH="C:/Program Files/Microsoft Visual Studio/2022/Enterprise/VC/Tools/MSVC/14.44.35207/bin/Hostx64/x64/cl.exe" -DCMAKE_CXX_COMPILER:FILEPATH="C:/Program Files/Microsoft Visual Studio/2022/Enterprise/VC/Tools/MSVC/14.44.35207/bin/Hostx64/x64/cl.exe"   -DCMAKE_MAKE_PROGRAM="C:\PROGRAM FILES\MICROSOFT VISUAL STUDIO\2022\ENTERPRISE\COMMON7\IDE\COMMONEXTENSIONS\MICROSOFT\CMAKE\Ninja\ninja.exe" "C:\Users\karpa\source\repos\bohdankarpaki\csad2526ki406bohdankarpa9" 2>&1"
+1> Working directory: C:\Users\karpa\source\repos\bohdankarpaki\csad2526ki406bohdankarpa9\out\build\x64-Debug
+1> [CMake] CMake Error at C:/Program Files/Microsoft Visual Studio/2022/Enterprise/Common7/IDE/CommonExtensions/Microsoft/CMake/CMake/share/cmake-3.31/Modules/FindPackageHandleStandardArgs.cmake:233 (message):
+1> [CMake]   Could NOT find GTest (missing: GTEST_LIBRARY GTEST_INCLUDE_DIR
+1> [CMake]   GTEST_MAIN_LIBRARY)
+1> [CMake] Call Stack (most recent call first):
+1> [CMake]   C:/Program Files/Microsoft Visual Studio/2022/Enterprise/Common7/IDE/CommonExtensions/Microsoft/CMake/CMake/share/cmake-3.31/Modules/FindPackageHandleStandardArgs.cmake:603 (_FPHSA_FAILURE_MESSAGE)
+1> [CMake]   C:/Program Files/Microsoft Visual Studio/2022/Enterprise/Common7/IDE/CommonExtensions/Microsoft/CMake/CMake/share/cmake-3.31/Modules/FindGTest.cmake:273 (FIND_PACKAGE_HANDLE_STANDARD_ARGS)
+1> [CMake]   CMakeLists.txt:17 (find_package)
+1> [CMake] -- Configuring incomplete, errors occurred!
+1> 'C:\WINDOWS\system32\cmd.exe' '/c "%SYSTEMROOT%\System32\chcp.com 65001 >NUL && "C:\PROGRAM FILES\MICROSOFT VISUAL STUDIO\2022\ENTERPRISE\COMMON7\IDE\COMMONEXTENSIONS\MICROSOFT\CMAKE\CMake\bin\cmake.exe"  -G "Ninja"  -DCMAKE_BUILD_TYPE:STRING="Debug" -DCMAKE_INSTALL_PREFIX:PATH="C:\Users\karpa\source\repos\bohdankarpaki\csad2526ki406bohdankarpa9\out\install\x64-Debug" -DCMAKE_C_COMPILER:FILEPATH="C:/Program Files/Microsoft Visual Studio/2022/Enterprise/VC/Tools/MSVC/14.44.35207/bin/Hostx64/x64/cl.exe" -DCMAKE_CXX_COMPILER:FILEPATH="C:/Program Files/Microsoft Visual Studio/2022/Enterprise/VC/Tools/MSVC/14.44.35207/bin/Hostx64/x64/cl.exe"   -DCMAKE_MAKE_PROGRAM="C:\PROGRAM FILES\MICROSOFT VISUAL STUDIO\2022\ENTERPRISE\COMMON7\IDE\COMMONEXTENSIONS\MICROSOFT\CMAKE\Ninja\ninja.exe" "C:\Users\karpa\source\repos\bohdankarpaki\csad2526ki406bohdankarpa9" 2>&1"' execution failed with error: ''C:\WINDOWS\system32\cmd.exe' '/c "%SYSTEMROOT%\System32\chcp.com 65001 >NUL && "C:\PROGRAM FILES\MICROSOFT VISUAL STUDIO\2022\ENTERPRISE\COMMON7\IDE\COMMONEXTENSIONS\MICROSOFT\CMAKE\CMake\bin\cmake.exe"  -G "Ninja"  -DCMAKE_BUILD_TYPE:STRING="Debug" -DCMAKE_INSTALL_PREFIX:PATH="C:\Users\karpa\source\repos\bohdankarpaki\csad2526ki406bohdankarpa9\out\install\x64-Debug" -DCMAKE_C_COMPILER:FILEPATH="C:/Program Files/Microsoft Visual Studio/2022/Enterprise/VC/Tools/MSVC/14.44.35207/bin/Hostx64/x64/cl.exe" -DCMAKE_CXX_COMPILER:FILEPATH="C:/Program Files/Microsoft Visual Studio/2022/Enterprise/VC/Tools/MSVC/14.44.35207/bin/Hostx64/x64/cl.exe"   -DCMAKE_MAKE_PROGRAM="C:\PROGRAM FILES\MICROSOFT VISUAL STUDIO\2022\ENTERPRISE\COMMON7\IDE\COMMONEXTENSIONS\MICROSOFT\CMAKE\Ninja\ninja.exe" "C:\Users\karpa\source\repos\bohdankarpaki\csad2526ki406bohdankarpa9" 2>&1"' returned with exit code: 1'.
+
+AI:
+This is a common issue. The error message Could NOT find GTest means that CMake's find_package command was unable to locate a pre-installed Google Test library on your system.
+
+The most reliable and modern way to fix this is to have CMake download and build Google Test for you automatically using its FetchContent module. This makes your project self-contained and easy to build on any machine without requiring manual dependency installation.
+
+## The Solution: Update CMakeLists.txt
+Replace the entire "Testing" section of your CMakeLists.txt with the following code. This new version fetches Google Test directly from its official GitHub repository.
+
+Here is the complete, corrected CMakeLists.txt file:
+
+CMake
+
+# Specify the minimum version of CMake required.
+cmake_minimum_required(VERSION 3.14) # FetchContent works best with 3.11+, 3.14 is a good baseline
+project(HelloWorld CXX)
+
+# Set the C++ standard to C++17 and make it a requirement.
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# ----------------- Main Executable -----------------
+# Add the source files for your main application.
+add_executable(hello main.cpp math_operations.cpp)
+
+
+# ----------------- Testing -----------------
+# Enable testing with CTest.
+enable_testing()
+
+# Include the FetchContent module to handle external dependencies.
+include(FetchContent)
+
+# Declare the Google Test dependency from its GitHub repository.
+FetchContent_Declare(
+  googletest
+  GIT_REPOSITORY https://github.com/google/googletest.git
+  GIT_TAG    release-1.14.0
+)
+
+# Make the dependency available to your project.
+# This will download and configure GTest.
+FetchContent_MakeAvailable(googletest)
+
+# Add a new executable for your tests.
+add_executable(run_tests tests/unit_tests.cpp math_operations.cpp)
+
+# Link the test executable against Google Test.
+# GTest::gtest_main links both the library and its main function.
+target_link_libraries(run_tests GTest::gtest_main)
+
+# Add the test to CTest for easy execution.
+add_test(NAME MathTests COMMAND run_tests)
+## What Changed and Why
+include(FetchContent): This line makes the FetchContent commands available.
+
+FetchContent_Declare(...): Instead of searching for GTest, we now declare where to get it from (the official Git repository) and which version to use (release-1.14.0). This ensures a consistent build every time.
+
+FetchContent_MakeAvailable(googletest): This is the magic command. It checks if the content has been downloaded, and if not, it clones the repository and configures it, making GTest's targets (like GTest::gtest_main) available for you to link against.
+
+find_package(GTest REQUIRED) was removed: We no longer need this because we are fetching the dependency ourselves instead of asking CMake to find a pre-installed version.
+
+After replacing the content of your CMakeLists.txt with the code above, delete your build directory and regenerate the project files. The error will be resolved.
+
+me: 1> CMake generation started for default configuration: 'x64-Debug'.
+
+1> Command line: "C:\WINDOWS\system32\cmd.exe" /c "%SYSTEMROOT%\System32\chcp.com 65001 >NUL && "C:\PROGRAM FILES\MICROSOFT VISUAL STUDIO\2022\ENTERPRISE\COMMON7\IDE\COMMONEXTENSIONS\MICROSOFT\CMAKE\CMake\bin\cmake.exe"  -G "Ninja"  -DCMAKE_BUILD_TYPE:STRING="Debug" -DCMAKE_INSTALL_PREFIX:PATH="C:\Users\karpa\source\repos\bohdankarpaki\csad2526ki406bohdankarpa9\out\install\x64-Debug" -DCMAKE_C_COMPILER:FILEPATH="C:/Program Files/Microsoft Visual Studio/2022/Enterprise/VC/Tools/MSVC/14.44.35207/bin/Hostx64/x64/cl.exe" -DCMAKE_CXX_COMPILER:FILEPATH="C:/Program Files/Microsoft Visual Studio/2022/Enterprise/VC/Tools/MSVC/14.44.35207/bin/Hostx64/x64/cl.exe"   -DCMAKE_MAKE_PROGRAM="C:\PROGRAM FILES\MICROSOFT VISUAL STUDIO\2022\ENTERPRISE\COMMON7\IDE\COMMONEXTENSIONS\MICROSOFT\CMAKE\Ninja\ninja.exe" "C:\Users\karpa\source\repos\bohdankarpaki\csad2526ki406bohdankarpa9" 2>&1"
+
+1> Working directory: C:\Users\karpa\source\repos\bohdankarpaki\csad2526ki406bohdankarpa9\out\build\x64-Debug
+
+1> [CMake] [0/8] Performing download step (git clone) for 'googletest-populate'
+
+1> [CMake] Cloning into 'googletest-src'...
+
+1> [CMake] fatal: invalid reference: release-1.14.0
+
+1> [CMake] CMake Error at googletest-subbuild/googletest-populate-prefix/tmp/googletest-populate-gitclone.cmake:61 (message):
+
+1> [CMake]   Failed to checkout tag: 'release-1.14.0'
+
+1> [CMake] 
+
+1> [CMake] 
+
+1> [CMake] FAILED: googletest-populate-prefix/src/googletest-populate-stamp/googletest-populate-download C:/Users/karpa/source/repos/bohdankarpaki/csad2526ki406bohdankarpa9/out/build/x64-Debug/_deps/googletest-subbuild/googletest-populate-prefix/src/googletest-populate-stamp/googletest-populate-download 
+
+1> [CMake] C:\WINDOWS\system32\cmd.exe /C "cd /D C:\Users\karpa\source\repos\bohdankarpaki\csad2526ki406bohdankarpa9\out\build\x64-Debug\_deps && "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -DCMAKE_MESSAGE_LOG_LEVEL=VERBOSE -P C:/Users/karpa/source/repos/bohdankarpaki/csad2526ki406bohdankarpa9/out/build/x64-Debug/_deps/googletest-subbuild/googletest-populate-prefix/tmp/googletest-populate-gitclone.cmake && "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin\cmake.exe" -E touch C:/Users/karpa/source/repos/bohdankarpaki/csad2526ki406bohdankarpa9/out/build/x64-Debug/_deps/googletest-subbuild/googletest-populate-prefix/src/googletest-populate-stamp/googletest-populate-download"
+
+1> [CMake] ninja: build stopped: subcommand failed.
+
+1> [CMake] 
+
+1> [CMake] CMake Error at C:/Program Files/Microsoft Visual Studio/2022/Enterprise/Common7/IDE/CommonExtensions/Microsoft/CMake/CMake/share/cmake-3.31/Modules/FetchContent.cmake:1918 (message):
+
+1> [CMake]   Build step for googletest failed: 1
+
+1> [CMake] Call Stack (most recent call first):
+
+1> [CMake]   C:/Program Files/Microsoft Visual Studio/2022/Enterprise/Common7/IDE/CommonExtensions/Microsoft/CMake/CMake/share/cmake-3.31/Modules/FetchContent.cmake:1609 (__FetchContent_populateSubbuild)
+
+1> [CMake]   C:/Program Files/Microsoft Visual Studio/2022/Enterprise/Common7/IDE/CommonExtensions/Microsoft/CMake/CMake/share/cmake-3.31/Modules/FetchContent.cmake:2145:EVAL:2 (__FetchContent_doPopulation)
+
+1> [CMake]   C:/Program Files/Microsoft Visual Studio/2022/Enterprise/Common7/IDE/CommonExtensions/Microsoft/CMake/CMake/share/cmake-3.31/Modules/FetchContent.cmake:2145 (cmake_language)
+
+1> [CMake]   C:/Program Files/Microsoft Visual Studio/2022/Enterprise/Common7/IDE/CommonExtensions/Microsoft/CMake/CMake/share/cmake-3.31/Modules/FetchContent.cmake:2384 (__FetchContent_Populate)
+
+1> [CMake]   CMakeLists.txt:30 (FetchContent_MakeAvailable)
+
+1> [CMake] -- Configuring incomplete, errors occurred!
+
+1> 'C:\WINDOWS\system32\cmd.exe' '/c "%SYSTEMROOT%\System32\chcp.com 65001 >NUL && "C:\PROGRAM FILES\MICROSOFT VISUAL STUDIO\2022\ENTERPRISE\COMMON7\IDE\COMMONEXTENSIONS\MICROSOFT\CMAKE\CMake\bin\cmake.exe"  -G "Ninja"  -DCMAKE_BUILD_TYPE:STRING="Debug" -DCMAKE_INSTALL_PREFIX:PATH="C:\Users\karpa\source\repos\bohdankarpaki\csad2526ki406bohdankarpa9\out\install\x64-Debug" -DCMAKE_C_COMPILER:FILEPATH="C:/Program Files/Microsoft Visual Studio/2022/Enterprise/VC/Tools/MSVC/14.44.35207/bin/Hostx64/x64/cl.exe" -DCMAKE_CXX_COMPILER:FILEPATH="C:/Program Files/Microsoft Visual Studio/2022/Enterprise/VC/Tools/MSVC/14.44.35207/bin/Hostx64/x64/cl.exe"   -DCMAKE_MAKE_PROGRAM="C:\PROGRAM FILES\MICROSOFT VISUAL STUDIO\2022\ENTERPRISE\COMMON7\IDE\COMMONEXTENSIONS\MICROSOFT\CMAKE\Ninja\ninja.exe" "C:\Users\karpa\source\repos\bohdankarpaki\csad2526ki406bohdankarpa9" 2>&1"' execution failed with error: ''C:\WINDOWS\system32\cmd.exe' '/c "%SYSTEMROOT%\System32\chcp.com 65001 >NUL && "C:\PROGRAM FILES\MICROSOFT VISUAL STUDIO\2022\ENTERPRISE\COMMON7\IDE\COMMONEXTENSIONS\MICROSOFT\CMAKE\CMake\bin\cmake.exe"  -G "Ninja"  -DCMAKE_BUILD_TYPE:STRING="Debug" -DCMAKE_INSTALL_PREFIX:PATH="C:\Users\karpa\source\repos\bohdankarpaki\csad2526ki406bohdankarpa9\out\install\x64-Debug" -DCMAKE_C_COMPILER:FILEPATH="C:/Program Files/Microsoft Visual Studio/2022/Enterprise/VC/Tools/MSVC/14.44.35207/bin/Hostx64/x64/cl.exe" -DCMAKE_CXX_COMPILER:FILEPATH="C:/Program Files/Microsoft Visual Studio/2022/Enterprise/VC/Tools/MSVC/14.44.35207/bin/Hostx64/x64/cl.exe"   -DCMAKE_MAKE_PROGRAM="C:\PROGRAM FILES\MICROSOFT VISUAL STUDIO\2022\ENTERPRISE\COMMON7\IDE\COMMONEXTENSIONS\MICROSOFT\CMAKE\Ninja\ninja.exe" "C:\Users\karpa\source\repos\bohdankarpaki\csad2526ki406bohdankarpa9" 2>&1"' returned with exit code: 1'.
+
+Ai:
+You've run into a git error! The message fatal: invalid reference: release-1.14.0 means that the Google Test repository does not have a tag with that exact name.
+
+The solution is to use a valid git tag or branch name. The simplest and most common choice is to use the main branch, which always points to the latest stable version.
+
+## The Fix
+In your CMakeLists.txt file, find the FetchContent_Declare block and change the GIT_TAG from release-1.14.0 to main.
+
+Replace this block:
+
+CMake
+
+FetchContent_Declare(
+  googletest
+  GIT_REPOSITORY https://github.com/google/googletest.git
+  GIT_TAG    release-1.14.0
+)
+With this corrected block:
+
+CMake
+
+FetchContent_Declare(
+  googletest
+  GIT_REPOSITORY https://github.com/google/googletest.git
+  GIT_TAG        main # Use the main branch for the latest version
+)
+## Why This Works
+Git tags and branch names must be exact. The Google Test project uses tags like v1.14.0, not release-1.14.0. By specifying main, you are telling CMake to simply clone the latest version from the primary development branch, which is a reliable way to get the code.
+
+## What to Do Next
+Save your updated CMakeLists.txt file.
+
+Delete your build directory (out/build/x64-Debug) to clear the failed download attempt. This is an important step!
+
+Regenerate the CMake cache. Visual Studio should do this automatically when you reopen the project or you can trigger it manually.
+
+After these steps, CMake will successfully download Google Test and your project will build correctly. 👍
