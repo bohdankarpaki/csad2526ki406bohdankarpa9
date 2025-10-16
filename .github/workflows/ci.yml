@@ -3,7 +3,7 @@ name: CI Build and Test
 on:
   push:
     # Запускати для гілок master, develop, а також для всіх feature-гілок
-    branches: [ master, develop, 'feature/**' ]
+    branches: [ master, develop ]
   pull_request:
     branches: [ master, develop ]
 
