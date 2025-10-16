@@ -842,49 +842,56 @@ This workflow runs a single job on Ubuntu, Windows, and macOS, and its only task
 
 .github/workflows/ci.yml
 YAML
-
 name: CI Build and Test
 
 on:
   push:
-    # Запускати для гілок master, develop, а також для всіх feature-гілок
     branches: [ master, develop, 'feature/**' ]
   pull_request:
     branches: [ master, develop ]
 
 jobs:
-  # Єдина задача, яка виконує збірку та тестування на всіх платформах
-  build_and_test:
-    name: Build & Test on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      # Матриця для запуску на трьох основних ОС
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-
+  # Задача №1: Швидка збірка та тестування лише на Ubuntu (1-й запуск)
+  build-and-test:
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Єдиний крок для збірки та тестування, що працює на всіх ОС
-      - name: Build and Test with Ninja
+      - name: Configure project
+        run: cmake -S . -B build -G "Ninja"
+
+      - name: Build project
+        run: cmake --build build
+
+      - name: Run tests
+        run: ctest --test-dir build --output-on-failure
+
+  # Задача №2: Повна крос-платформна збірка (ще 3 запуски)
+  cross_build:
+    # Ця задача залежить від успішного завершення першої
+    needs: build-and-test
+    name: Cross Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build and Test
         shell: bash
         run: |
-          # Створюємо директорію для збірки
           mkdir -p build
           cd build
           
-          # Конфігуруємо проєкт, вказуючи Ninja як генератор
-          # Це вирішує проблеми зі збіркою на Windows
+          # Використовуємо Ninja на всіх платформах для стабільності
           cmake .. -G "Ninja"
           
-          # Збираємо проєкт
           cmake --build .
-          
-          # Запускаємо тести з детальним виводом у разі помилки
           ctest --output-on-failure
-
-      # Зберігаємо результати збірки (артефакти)
+      
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
