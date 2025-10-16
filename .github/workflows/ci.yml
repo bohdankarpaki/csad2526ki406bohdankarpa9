@@ -2,60 +2,44 @@ name: CI Build and Test
 
 on:
   push:
-    branches: [master, develop, feature/develop/5-github-actions ]
+    # Запускати для гілок master, develop, а також для всіх feature-гілок
+    branches: [ master, develop, 'feature/**' ]
   pull_request:
-    branches: [master, develop, feature/develop/5-github-actions ]
+    branches: [ master, develop ]
 
 jobs:
-  # Задача №1: Швидка збірка та тестування лише на Ubuntu
-  build-and-test:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up CMake
-        uses: jwlawson/actions-setup-cmake@v2
-
-      - name: Install dependencies
-        run: sudo apt-get update && sudo apt-get install -y build-essential
-
-      - name: Configure project
-        run: cmake -S . -B build
-
-      - name: Build project
-        run: cmake --build build
-
-      - name: Run tests
-        run: ctest --test-dir build
-
-  # Задача №2: Повна крос-платформна збірка
-  cross_build:
-    name: Cross Build
+  # Єдина задача, яка виконує збірку та тестування на всіх платформах
+  build_and_test:
+    name: Build & Test on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
+      # Матриця для запуску на трьох основних ОС
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Цей крок виконує ci.sh на Linux/macOS, але має окремі команди для Windows
-      - name: Build and Test
+      # Єдиний крок для збірки та тестування, що працює на всіх ОС
+      - name: Build and Test with Ninja
         shell: bash
         run: |
-          if [[ "${{ runner.os }}" == "Windows" ]]; then
-            mkdir build
-            cd build
-            cmake ..
-            cmake --build .
-            ctest
-          else
-            chmod +x ./ci.sh
-            ./ci.sh
-          fi
-      
-      # Цей крок зберігає результати збірки (артефакти)
+          # Створюємо директорію для збірки
+          mkdir -p build
+          cd build
+          
+          # Конфігуруємо проєкт, вказуючи Ninja як генератор
+          # Це вирішує проблеми зі збіркою на Windows
+          cmake .. -G "Ninja"
+          
+          # Збираємо проєкт
+          cmake --build .
+          
+          # Запускаємо тести з детальним виводом у разі помилки
+          ctest --output-on-failure
+
+      # Зберігаємо результати збірки (артефакти)
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
