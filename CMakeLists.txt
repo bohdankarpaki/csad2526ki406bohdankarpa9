@@ -1,5 +1,5 @@
 # Specify the minimum version of CMake required.
-cmake_minimum_required(VERSION 3.14) # FetchContent works best with 3.11+, 3.14 is a good baseline
+cmake_minimum_required(VERSION 3.14)
 project(HelloWorld CXX)
 
 # Set the C++ standard to C++17 and make it a requirement.
@@ -22,19 +22,21 @@ include(FetchContent)
 FetchContent_Declare(
   googletest
   GIT_REPOSITORY https://github.com/google/googletest.git
-  GIT_TAG        main # Use the main branch for the latest version
+  GIT_TAG        main
 )
 
+# ADD THIS LINE to force GTest to use the same runtime library as your project.
+set(gtest_force_shared_crt ON)
+
 # Make the dependency available to your project.
-# This will download and configure GTest.
 FetchContent_MakeAvailable(googletest)
 
 # Add a new executable for your tests.
 add_executable(run_tests tests/unit_tests.cpp math_operations.cpp)
 
 # Link the test executable against Google Test.
-# GTest::gtest_main links both the library and its main function.
 target_link_libraries(run_tests GTest::gtest_main)
 
-# Add the test to CTest for easy execution.
-add_test(NAME MathTests COMMAND run_tests)
+# Include the GoogleTest module and automatically discover tests.
+include(GoogleTest)
+gtest_discover_tests(run_tests)
