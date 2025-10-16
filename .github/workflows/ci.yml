@@ -2,9 +2,9 @@ name: CI Build and Test
 
 on:
   push:
-    branches: [master, develop]
+    branches: [master, develop, feature/develop/5-github-actions ]
   pull_request:
-    branches: [master, develop]
+    branches: [master, develop, feature/develop/5-github-actions ]
 
 jobs:
   # Задача №1: Швидка збірка та тестування лише на Ubuntu
