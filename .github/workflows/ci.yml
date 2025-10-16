@@ -1,0 +1,63 @@
+name: CI Build and Test
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  # Задача №1: Швидка збірка та тестування лише на Ubuntu
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up CMake
+        uses: jwlawson/actions-setup-cmake@v2
+
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y build-essential
+
+      - name: Configure project
+        run: cmake -S . -B build
+
+      - name: Build project
+        run: cmake --build build
+
+      - name: Run tests
+        run: ctest --test-dir build
+
+  # Задача №2: Повна крос-платформна збірка
+  cross_build:
+    name: Cross Build
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Цей крок виконує ci.sh на Linux/macOS, але має окремі команди для Windows
+      - name: Build and Test
+        shell: bash
+        run: |
+          if [[ "${{ runner.os }}" == "Windows" ]]; then
+            mkdir build
+            cd build
+            cmake ..
+            cmake --build .
+            ctest
+          else
+            chmod +x ./ci.sh
+            ./ci.sh
+          fi
+      
+      # Цей крок зберігає результати збірки (артефакти)
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-results-${{ matrix.os }}
+          path: build/
