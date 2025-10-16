@@ -844,7 +844,6 @@ This workflow runs a single job on Ubuntu, Windows, and macOS, and its only task
 YAML
 
 name: CI Build and Test
-
 on:
   push:
     branches: [main, develop]
