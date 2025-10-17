@@ -2,7 +2,6 @@ name: CI Build and Test
 
 on:
   push:
-    # Запускати для гілок master, develop та всіх feature-гілок
     branches: [ "master", "develop", "feature/develop/**" ]
   pull_request:
     branches: [ "master", "develop" ]
@@ -19,22 +18,26 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Configure, Build, and Test
-        shell: bash
+      - name: Configure CMake
         run: |
-          # 1. Конфігуруємо проєкт, створюючи папку 'build'
-          cmake -B build -G "Ninja"
+          # Встановлюємо налаштування для статичної збірки ТІЛЬКИ для Windows
+          if [[ "${{ runner.os }}" == "Windows" ]]; then
+            CMAKE_ARGS="-DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded -DCMAKE_BUILD_TYPE=Release"
+          else
+            CMAKE_ARGS="-DCMAKE_BUILD_TYPE=Release"
+          fi
+          
+          # Конфігуруємо проєкт з правильними аргументами
+          cmake -B build -G "Ninja" $CMAKE_ARGS
 
-          # 2. Збираємо проєкт у конфігурації 'Release'
-          # Це ключовий крок для уникнення помилок DLL на Windows
-          cmake --build build --config Release
+      - name: Build Project
+        run: cmake --build build --config Release
 
-          # 3. Запускаємо тести з папки збірки
-          ctest --test-dir build --output-on-failure
+      - name: Run Tests
+        run: ctest --test-dir build --output-on-failure
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: build-results-${{ matrix.os }}
-          # Вказуємо шлях до папки з результатами Release збірки
           path: build/
