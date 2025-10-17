@@ -2,40 +2,37 @@
 cmake_minimum_required(VERSION 3.14)
 project(HelloWorld CXX)
 
-# Set the C++ standard to C++17 and make it a requirement.
+# Statically link the C++ runtime library to avoid missing DLL issues on Windows.
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+
+# Set the C++ standard to C++17.
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# ----------------- Main Executable -----------------
-# Add the source files for your main application.
-add_executable(hello main.cpp math_operations.cpp)
+# ----------------- Shared Library -----------------
+# Create a library from your shared code to avoid compiling it multiple times.
+add_library(math_lib math_operations.cpp)
 
+# ----------------- Main Executable -----------------
+# Define the main executable and link it to your library.
+add_executable(hello main.cpp)
+target_link_libraries(hello math_lib)
 
 # ----------------- Testing -----------------
-# Enable testing with CTest.
 enable_testing()
-
-# Include the FetchContent module to handle external dependencies.
 include(FetchContent)
 
-# Declare the Google Test dependency from its GitHub repository.
+# Declare and fetch Google Test.
 FetchContent_Declare(
   googletest
   GIT_REPOSITORY https://github.com/google/googletest.git
   GIT_TAG        main
 )
-
-# ADD THIS LINE to force GTest to use the same runtime library as your project.
-set(gtest_force_shared_crt ON)
-
-# Make the dependency available to your project.
 FetchContent_MakeAvailable(googletest)
 
-# Add a new executable for your tests.
-add_executable(run_tests tests/unit_tests.cpp math_operations.cpp)
-
-# Link the test executable against Google Test.
-target_link_libraries(run_tests GTest::gtest_main)
+# Define the test executable and link it to Google Test and your library.
+add_executable(run_tests tests/unit_tests.cpp)
+target_link_libraries(run_tests GTest::gtest_main math_lib)
 
 # Include the GoogleTest module and automatically discover tests.
 include(GoogleTest)

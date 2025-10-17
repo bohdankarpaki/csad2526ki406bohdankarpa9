@@ -3,7 +3,7 @@ name: CI Build and Test
 on:
   push:
     # Запускати для гілок master, develop, а також для всіх feature-гілок
-    branches: [ master, develop ]
+    branches: [ master, develop, feature/develop/5-github-actions ]
   pull_request:
     branches: [ master, develop ]
 
