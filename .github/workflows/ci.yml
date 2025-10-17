@@ -2,39 +2,55 @@ name: CI Build and Test
 
 on:
   push:
-    branches: [ "master", "develop", "feature/develop/**" ]
+    branches: [main, develop]
   pull_request:
-    branches: [ "master", "develop" ]
+    branches: [main, develop]
 
 jobs:
-  build_and_test:
-    name: Build & Test on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-
+  build-and-test:
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Configure CMake
+      - name: Set up CMake
+        uses: jwlawson/actions-setup-cmake@v2
+
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y build-essential
+
+      - name: Configure project
+        run: cmake -S . -B build
+
+      - name: Build project
+        run: cmake --build build
+
+      - name: Run tests
+        run: ctest --test-dir build
+
+  cross_build:
+    name: Cross Build
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build and Test
+        shell: bash
         run: |
-          # Встановлюємо налаштування для статичної збірки ТІЛЬКИ для Windows
           if [[ "${{ runner.os }}" == "Windows" ]]; then
-            CMAKE_ARGS="-DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded -DCMAKE_BUILD_TYPE=Release"
+            mkdir build
+            cd build
+            cmake ..
+            cmake --build .
+            ctest
           else
-            CMAKE_ARGS="-DCMAKE_BUILD_TYPE=Release"
+            chmod +x ./ci.sh
+            ./ci.sh
           fi
-          
-          # Конфігуруємо проєкт з правильними аргументами
-          cmake -B build -G "Ninja" $CMAKE_ARGS
-
-      - name: Build Project
-        run: cmake --build build --config Release
-
-      - name: Run Tests
-        run: ctest --test-dir build --output-on-failure
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4

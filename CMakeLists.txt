@@ -1,34 +1,29 @@
-# Встановлюємо мінімальну версію CMake
-cmake_minimum_required(VERSION 3.14)
-project(HelloWorld CXX)
+cmake_minimum_required(VERSION 3.10)
+project(csad2526KI404MaksymFedyna25)
 
-# Встановлюємо стандарт C++17
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_STANDARD 20)
 
-# Створюємо бібліотеку з логікою
-add_library(math_lib math_operations.cpp)
+add_executable(csad2526KI404MaksymFedyna25 main.cpp
+        math_operations.h
+        math_operations.cpp)
 
-# Створюємо основну програму
-add_executable(hello main.cpp)
-target_link_libraries(hello math_lib)
-
-# --- Налаштування тестування ---
+# Enable testing
+include(CTest)
 enable_testing()
-include(FetchContent)
 
-# Завантажуємо Google Test
+# Add GoogleTest
+include(FetchContent)
 FetchContent_Declare(
   googletest
-  GIT_REPOSITORY https://github.com/google/googletest.git
-  GIT_TAG        release-1.14.0 # Використовуємо стабільний реліз
+  URL https://github.com/google/googletest/archive/refs/heads/main.zip
 )
+# For Windows: Prevent overriding the parent project's compiler/linker settings
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
-# Створюємо виконуваний файл для тестів
-add_executable(run_tests tests/unit_tests.cpp)
-target_link_libraries(run_tests GTest::gtest_main math_lib)
+# Add test executable
+add_executable(unit_tests tests/unit_tests.cpp math_operations.cpp)
+target_link_libraries(unit_tests gtest_main)
 
-# Автоматично знаходимо та додаємо тести
 include(GoogleTest)
-gtest_discover_tests(run_tests)
+gtest_discover_tests(unit_tests)
