@@ -34,14 +34,12 @@ FetchContent_MakeAvailable(googletest)
 add_executable(run_tests tests/unit_tests.cpp math_operations.cpp)
 target_link_libraries(run_tests GTest::gtest_main)
 
-# --- ОНОВЛЕНО: Спрощений блок тестування ---
-
-# 1. Приберіть 'include(GoogleTest)' (або закоментуйте)
+# --- ОНОВЛЕНО: Використання Generator Expression ---
+# Приберіть старі команди (include(GoogleTest), gtest_discover_tests)
 # include(GoogleTest)
-
-# 2. Приберіть 'gtest_discover_tests(run_tests)' (або закоментуйте)
 # gtest_discover_tests(run_tests)
 
-# 3. Додайте замість них простий 'add_test'
-# Це просто запустить 'run_tests.exe'
-add_test(NAME UnitTests COMMAND run_tests)
+# Було: add_test(NAME UnitTests COMMAND run_tests)
+# Стало:
+# Це гарантує, що CTest отримає повний шлях (напр. "Release/run_tests.exe")
+add_test(NAME UnitTests COMMAND $<TARGET_FILE:run_tests>)

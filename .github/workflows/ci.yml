@@ -2,7 +2,7 @@ name: CI Build and Test
 
 on:
   push:
-    branches: [ master, develop, 'feature/**' ]
+    branches: [ master, develop , 'feature/**']
   pull_request:
     branches: [ master, develop ]
 
@@ -11,7 +11,7 @@ jobs:
     name: Build & Test on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
-      fail-fast: false # Дозволяє всім збіркам завершитись
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
 
@@ -19,8 +19,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # ОНОВЛЕНО: Цей крок тепер обробляє multi-config (Windows)
-      # та single-config (Linux/macOS) генератори
       - name: Build and Test
         shell: bash
         run: |
@@ -37,28 +35,27 @@ jobs:
             # Windows = Multi-config (Visual Studio)
             echo "Windows detected. Configuring for 32-bit (Win32)."
             CMAKE_ARGS="-A Win32"
-            BUILD_ARGS="--config $CONFIG"
+            
+            # ОНОВЛЕНО: Ми збираємо 'ALL_BUILD', щоб пропустити 'RUN_TESTS'
+            BUILD_ARGS="--config $CONFIG --target ALL_BUILD"
             TEST_ARGS="-C $CONFIG"
           else
             # Linux/macOS = Single-config (Ninja)
             echo "${{ runner.os }} detected. Configuring with Ninja generator."
             CMAKE_ARGS="-G Ninja -DCMAKE_BUILD_TYPE=$CONFIG"
-            # Для single-config ці прапори не потрібні
             BUILD_ARGS="" 
             TEST_ARGS=""
           fi
           
           # 1. Конфігурація
-          # Windows: cmake .. -A Win32
-          # Linux:   cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release
           cmake .. $CMAKE_ARGS
           
           # 2. Збірка
-          # Windows: cmake --build . --config Release
+          # Windows: cmake --build . --config Release --target ALL_BUILD
           # Linux:   cmake --build .
           cmake --build . $BUILD_ARGS
           
-          # 3. Тестування
+          # 3. Тестування (запускається окремо, ПІСЛЯ збірки)
           # Windows: ctest --output-on-failure -C Release
           # Linux:   ctest --output-on-failure
           ctest --output-on-failure $TEST_ARGS
