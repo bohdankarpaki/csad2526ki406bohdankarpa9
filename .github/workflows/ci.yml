@@ -2,7 +2,7 @@ name: CI Build and Test
 
 on:
   push:
-    branches: [ master, develop , 'feature/**' ]
+    branches: [ master, develop , 'feature/**']
   pull_request:
     branches: [ master, develop ]
 
@@ -11,6 +11,7 @@ jobs:
     name: Build & Test on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false # (Рекомендовано) Дозволяє всім збіркам завершитись, навіть якщо одна впаде
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
 
@@ -18,7 +19,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # ОНОВЛЕНО: Назва кроку та логіка
       - name: Build and Test
         shell: bash
         run: |
@@ -35,15 +35,16 @@ jobs:
           else
             # На Linux/macOS: Використовуємо Ninja
             echo "${{ runner.os }} detected. Configuring with Ninja generator."
-            CMAKE_ARGS="$CMAKE_ARGS -G \"Ninja\""
+            
+            # ОНОВЛЕНО: Лапки навколо Ninja прибрані
+            # Було: CMAKE_ARGS="$CMAKE_ARGS -G \"Ninja\""
+            CMAKE_ARGS="$CMAKE_ARGS -G Ninja"
           fi
           
           # Запускаємо CMake з правильними аргументами
-          # Windows: cmake .. -DCMAKE_BUILD_TYPE=Release -A Win32
-          # Інші:    cmake .. -DCMAKE_BUILD_TYPE=Release -G "Ninja"
           cmake .. $CMAKE_ARGS
           
-          # Збираємо проєкт (ця команда працює з будь-яким генератором)
+          # Збираємо проєкт
           cmake --build .
           
           # Запускаємо тести
