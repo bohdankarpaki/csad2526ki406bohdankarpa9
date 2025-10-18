@@ -2,7 +2,8 @@
 cmake_minimum_required(VERSION 3.14)
 project(HelloWorld CXX)
 
-# Цей блок для статичного зв'язування (ЗАЛИШТЕ ЙОГО)
+# ЗАЛИШІТЬ ЦЕЙ БЛОК:
+# Він вмикає статичне зв'язування (/MT), щоб .exe був портативним
 if(MSVC)
   set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 endif()
@@ -25,8 +26,8 @@ FetchContent_Declare(
   GIT_TAG        main
 )
 
-# ОНОВЛЕНО: ВИДАЛІТЬ ЦЕЙ РЯДОК
-# set(gtest_force_shared_crt ON)  <-- ВИДАЛІТЬ ЦЕ
+# ПЕРЕКОНАЙТЕСЬ, ЩО ЦЕЙ РЯДОК ВИДАЛЕНО АБО ЗАКОМЕНТОВАНО:
+# set(gtest_force_shared_crt ON)
 
 # Make the dependency available to your project.
 FetchContent_MakeAvailable(googletest)

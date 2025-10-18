@@ -2,7 +2,7 @@ name: CI Build and Test
 
 on:
   push:
-    branches: [ master, develop, 'feature/**' ]
+    branches: [ master, develop , 'feature/**' ]
   pull_request:
     branches: [ master, develop ]
 
@@ -18,26 +18,32 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # ОНОВЛЕНО: Цей крок тепер має логіку для 32-бітної збірки на Windows
-      - name: Build and Test with Ninja
+      # ОНОВЛЕНО: Назва кроку та логіка
+      - name: Build and Test
         shell: bash
         run: |
           mkdir -p build
           cd build
           
-          # Встановлюємо додаткові аргументи CMake
-          EXTRA_CMAKE_ARGS=""
+          # Готуємо аргументи для CMake
+          CMAKE_ARGS="-DCMAKE_BUILD_TYPE=Release"
+
           if [[ "${{ runner.os }}" == "Windows" ]]; then
-            # Примусова 32-бітна (x86) збірка на Windows для вирішення помилки 0xc000007b
-            echo "Windows detected. Forcing 32-bit (Win32) build."
-            EXTRA_CMAKE_ARGS="-A Win32"
+            # На Windows: Використовуємо генератор VS за замовчуванням + прапор 32-bit
+            echo "Windows detected. Configuring for 32-bit (Win32)."
+            CMAKE_ARGS="$CMAKE_ARGS -A Win32"
+          else
+            # На Linux/macOS: Використовуємо Ninja
+            echo "${{ runner.os }} detected. Configuring with Ninja generator."
+            CMAKE_ARGS="$CMAKE_ARGS -G \"Ninja\""
           fi
           
-          # Конфігуруємо проєкт, передаючи додаткові аргументи
-          # Ми все ще збираємо в Release
-          cmake .. -G "Ninja" -DCMAKE_BUILD_TYPE=Release $EXTRA_CMAKE_ARGS
+          # Запускаємо CMake з правильними аргументами
+          # Windows: cmake .. -DCMAKE_BUILD_TYPE=Release -A Win32
+          # Інші:    cmake .. -DCMAKE_BUILD_TYPE=Release -G "Ninja"
+          cmake .. $CMAKE_ARGS
           
-          # Збираємо проєкт
+          # Збираємо проєкт (ця команда працює з будь-яким генератором)
           cmake --build .
           
           # Запускаємо тести
