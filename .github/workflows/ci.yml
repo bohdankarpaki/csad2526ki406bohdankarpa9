@@ -2,7 +2,7 @@ name: CI Build and Test
 
 on:
   push:
-    branches: [ master, develop , 'feature/**']
+    branches: [ master, develop, 'feature/**' ]
   pull_request:
     branches: [ master, develop ]
 
@@ -11,7 +11,7 @@ jobs:
     name: Build & Test on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
-      fail-fast: false # (Рекомендовано) Дозволяє всім збіркам завершитись, навіть якщо одна впаде
+      fail-fast: false # Дозволяє всім збіркам завершитись
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
 
@@ -19,36 +19,49 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # ОНОВЛЕНО: Цей крок тепер обробляє multi-config (Windows)
+      # та single-config (Linux/macOS) генератори
       - name: Build and Test
         shell: bash
         run: |
           mkdir -p build
           cd build
           
-          # Готуємо аргументи для CMake
-          CMAKE_ARGS="-DCMAKE_BUILD_TYPE=Release"
+          # Налаштовуємо змінні
+          CONFIG="Release"
+          CMAKE_ARGS=""
+          BUILD_ARGS=""
+          TEST_ARGS=""
 
           if [[ "${{ runner.os }}" == "Windows" ]]; then
-            # На Windows: Використовуємо генератор VS за замовчуванням + прапор 32-bit
+            # Windows = Multi-config (Visual Studio)
             echo "Windows detected. Configuring for 32-bit (Win32)."
-            CMAKE_ARGS="$CMAKE_ARGS -A Win32"
+            CMAKE_ARGS="-A Win32"
+            BUILD_ARGS="--config $CONFIG"
+            TEST_ARGS="-C $CONFIG"
           else
-            # На Linux/macOS: Використовуємо Ninja
+            # Linux/macOS = Single-config (Ninja)
             echo "${{ runner.os }} detected. Configuring with Ninja generator."
-            
-            # ОНОВЛЕНО: Лапки навколо Ninja прибрані
-            # Було: CMAKE_ARGS="$CMAKE_ARGS -G \"Ninja\""
-            CMAKE_ARGS="$CMAKE_ARGS -G Ninja"
+            CMAKE_ARGS="-G Ninja -DCMAKE_BUILD_TYPE=$CONFIG"
+            # Для single-config ці прапори не потрібні
+            BUILD_ARGS="" 
+            TEST_ARGS=""
           fi
           
-          # Запускаємо CMake з правильними аргументами
+          # 1. Конфігурація
+          # Windows: cmake .. -A Win32
+          # Linux:   cmake .. -G Ninja -DCMAKE_BUILD_TYPE=Release
           cmake .. $CMAKE_ARGS
           
-          # Збираємо проєкт
-          cmake --build .
+          # 2. Збірка
+          # Windows: cmake --build . --config Release
+          # Linux:   cmake --build .
+          cmake --build . $BUILD_ARGS
           
-          # Запускаємо тести
-          ctest --output-on-failure
+          # 3. Тестування
+          # Windows: ctest --output-on-failure -C Release
+          # Linux:   ctest --output-on-failure
+          ctest --output-on-failure $TEST_ARGS
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v4
