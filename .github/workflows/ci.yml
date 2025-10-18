@@ -6,7 +6,7 @@ on:
     branches:
       - 'master'
       - 'develop'
-      - 'feature/develop' # Додано для вашої гілки
+      - 'feature/**' # Додано для вашої гілки
   pull_request:
     branches:
       - 'master'
