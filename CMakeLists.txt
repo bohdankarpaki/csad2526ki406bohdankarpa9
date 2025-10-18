@@ -2,45 +2,41 @@
 cmake_minimum_required(VERSION 3.14)
 project(HelloWorld CXX)
 
-# ВАЖЛИВО: Цей блок вмикає статичне зв'язування (/MT) на Windows.
-# Це вирішує вашу початкову помилку 0xc000007b.
-if(MSVC)
-  set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
-endif()
-
 # Set the C++ standard to C++17 and make it a requirement.
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # ----------------- Main Executable -----------------
+# Add the source files for your main application.
 add_executable(hello main.cpp math_operations.cpp)
 
 
 # ----------------- Testing -----------------
+# Enable testing with CTest.
 enable_testing()
+
+# Include the FetchContent module to handle external dependencies.
 include(FetchContent)
 
+# Declare the Google Test dependency from its GitHub repository.
 FetchContent_Declare(
   googletest
   GIT_REPOSITORY https://github.com/google/googletest.git
   GIT_TAG        main
 )
 
-# ВАЖЛИВО: Переконайтесь, що цей рядок видалено або закоментовано
-# set(gtest_force_shared_crt ON)
+# ADD THIS LINE to force GTest to use the same runtime library as your project.
+set(gtest_force_shared_crt ON)
 
+# Make the dependency available to your project.
 FetchContent_MakeAvailable(googletest)
 
+# Add a new executable for your tests.
 add_executable(run_tests tests/unit_tests.cpp math_operations.cpp)
+
+# Link the test executable against Google Test.
 target_link_libraries(run_tests GTest::gtest_main)
 
-# --- ФІНАЛЬНИЙ БЛОК ТЕСТУВАННЯ ---
-
-# ВАЖЛИВО: ВИДАЛІТЬ або закоментуйте ці два рядки.
-# Вони є причиною помилки MSB3073.
-# include(GoogleTest)
-# gtest_discover_tests(run_tests)
-
-# ВАЖЛИВО: ЗАЛИШІТЬ ТІЛЬКИ ЦЕЙ РЯДОК.
-# Він правильно реєструє тест, не створюючи конфліктів при збірці.
-add_test(NAME UnitTests COMMAND $<TARGET_FILE:run_tests>)
+# Include the GoogleTest module and automatically discover tests.
+include(GoogleTest)
+gtest_discover_tests(run_tests)

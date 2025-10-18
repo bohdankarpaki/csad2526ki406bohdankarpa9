@@ -2,22 +2,18 @@ name: CI Build and Test
 
 on:
   push:
-    # Запускати для гілок, що містять "develop" або "master"
-    branches:
-      - 'master'
-      - 'develop'
-      - 'feature/**' # Додано для вашої гілки
+    # Запускати для гілок master, develop, а також для всіх feature-гілок
+    branches: [ master, develop, 'feature/**' ]
   pull_request:
-    branches:
-      - 'master'
-      - 'develop'
+    branches: [ master, develop ]
 
 jobs:
-  cross_build:
+  # Єдина задача, яка виконує збірку та тестування на всіх платформах
+  build_and_test:
     name: Build & Test on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
-      fail-fast: false # Дозволяє всім збіркам завершитись, навіть якщо одна впаде
+      # Матриця для запуску на трьох основних ОС
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
 
@@ -25,60 +21,27 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Build and Test
+      # Єдиний крок для збірки та тестування, що працює на всіх ОС
+      - name: Build and Test with Ninja
         shell: bash
         run: |
+          # Створюємо директорію для збірки
           mkdir -p build
           cd build
           
-          # Налаштовуємо змінні для різних ОС
-          CONFIG="Release"
-          CMAKE_ARGS=""
-          BUILD_ARGS=""
-          TEST_ARGS=""
+          # Конфігуруємо проєкт, вказуючи Ninja як генератор
+          # Це вирішує проблеми зі збіркою на Windows
+          cmake .. -G "Ninja"
+          
+          # Збираємо проєкт
+          cmake --build .
+          
+          # Запускаємо тести з детальним виводом у разі помилки
+          ctest --output-on-failure
 
-          if [[ "${{ runner.os }}" == "Windows" ]]; then
-            # Windows: Multi-config, 32-bit, і збірка цілі 'ALL_BUILD'
-            echo "Windows detected. Configuring for 32-bit (Win32)."
-            CMAKE_ARGS="-A Win32"
-            BUILD_ARGS="--config $CONFIG --target ALL_BUILD"
-            TEST_ARGS="-C $CONFIG"
-          else
-            # Linux/macOS: Single-config з Ninja
-            echo "${{ runner.os }} detected. Configuring with Ninja generator."
-            CMAKE_ARGS="-G Ninja -DCMAKE_BUILD_TYPE=$CONFIG"
-          fi
-          
-          # 1. Конфігурація
-          echo "[STEP] Configuring..."
-          cmake .. $CMAKE_ARGS
-          
-          # 2. Збірка
-          echo "[STEP] Building..."
-          cmake --build . $BUILD_ARGS
-          
-          # 3. Тестування
-          echo "[STEP] Testing..."
-          ctest --output-on-failure $TEST_ARGS
-
-      # Етап 6.4: Завантаження артефактів для верифікації
-      - name: Upload Windows Artifact (hello.exe)
-        if: runner.os == 'Windows'
+      # Зберігаємо результати збірки (артефакти)
+      - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: hello-windows-32bit
-          path: build/Release/hello.exe # Завантажуємо тільки сам .exe
-
-      - name: Upload Linux Artifact
-        if: runner.os == 'Linux'
-        uses: actions/upload-artifact@v4
-        with:
-          name: hello-linux
-          path: build/hello # Шлях для single-config
-
-      - name: Upload macOS Artifact
-        if: runner.os == 'macOS'
-        uses: actions/upload-artifact@v4
-        with:
-          name: hello-macos
-          path: build/hello # Шлях для single-config
+          name: build-results-${{ matrix.os }}
+          path: build/
