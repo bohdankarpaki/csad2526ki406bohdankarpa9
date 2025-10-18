@@ -1,29 +1,36 @@
-cmake_minimum_required(VERSION 3.10)
-project(csad2526KI404MaksymFedyna25)
+cmake_minimum_required(VERSION 3.14)
+project(HelloWorld CXX)
 
-set(CMAKE_CXX_STANDARD 20)
+# ОНОВЛЕНО: Встановлюємо Release як тип збірки за замовчуванням
+# Це хороший варіант, якщо ви майже завжди хочете Release-збірку
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE Release)
+  message(STATUS "Build type not specified, defaulting to: ${CMAKE_BUILD_TYPE}")
+endif()
 
-add_executable(csad2526KI404MaksymFedyna25 main.cpp
-        math_operations.h
-        math_operations.cpp)
+# Set the C++ standard to C++17 and make it a requirement.
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Enable testing
-include(CTest)
+# ----------------- Main Executable -----------------
+add_executable(hello main.cpp math_operations.cpp)
+
+
+# ----------------- Testing -----------------
 enable_testing()
-
-# Add GoogleTest
 include(FetchContent)
+
 FetchContent_Declare(
   googletest
-  URL https://github.com/google/googletest/archive/refs/heads/main.zip
+  GIT_REPOSITORY https://github.com/google/googletest.git
+  GIT_TAG        main
 )
-# For Windows: Prevent overriding the parent project's compiler/linker settings
-set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+
+set(gtest_force_shared_crt ON)
 FetchContent_MakeAvailable(googletest)
 
-# Add test executable
-add_executable(unit_tests tests/unit_tests.cpp math_operations.cpp)
-target_link_libraries(unit_tests gtest_main)
+add_executable(run_tests tests/unit_tests.cpp math_operations.cpp)
+target_link_libraries(run_tests GTest::gtest_main)
 
 include(GoogleTest)
-gtest_discover_tests(unit_tests)
+gtest_discover_tests(run_tests)

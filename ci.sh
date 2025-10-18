@@ -1,23 +1,32 @@
 #!/bin/bash
+
+# Exit immediately if a command exits with a non-zero status.
 set -e
 
-# Remove build directory if it exists
-if [ -d "build" ]; then
-  rm -rf build
-fi
+echo "--- Starting CI Build and Test ---"
+echo
 
-# Create a new build directory
-mkdir build
+# 1. Create the build directory if it doesn't exist.
+mkdir -p build
+
+# 2. Change into the build directory.
 cd build
 
-echo "--- Running Tests ---"
-# Configure the project
-cmake ..
+# 3. Configure the project using CMake and the Ninja generator.
+echo "[STEP] Configuring project..."
+# ŒÕŒ¬À≈ÕŒ: ƒÓ‰‡ÌÓ -DCMAKE_BUILD_TYPE=Release
+cmake .. -G "Ninja" -DCMAKE_BUILD_TYPE=Release
 
-# Build the project
+# 4. Build the project.
+echo
+echo "[STEP] Building project..."
 cmake --build .
 
-# Run tests
-ctest
+# 5. Run the tests with CTest.
+echo
+echo "[STEP] Running tests..."
+ctest --output-on-failure
 
-echo "--- CI Script Finished Successfully ---"
+# 6. If all previous commands succeeded, print the success message.
+echo
+echo "--- CI SUCCEEDED ---"

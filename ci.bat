@@ -1,33 +1,43 @@
 @echo off
-REM Stop execution if any command fails
-setlocal enabledelayedexpansion
-goto start
-:fail
-exit /b 1
-:start
+setlocal
 
-REM Remove build directory if it exists
-if exist build (
-    rmdir /s /q build
-    if exist build goto fail
-)
+echo --- Starting CI Build and Test ---
+echo.
 
-REM Create a new build directory
-mkdir build
+REM Create build directory if it doesn't exist
+if not exist build mkdir build
 if errorlevel 1 goto fail
+
+REM Change into build directory
 cd build
 if errorlevel 1 goto fail
 
-REM Configure the project
-cmake ..
+REM Configure the project using CMake and the Ninja generator
+echo [STEP] Configuring project...
+REM ŒÕŒ¬À≈ÕŒ: ƒÓ‰‡ÌÓ -DCMAKE_BUILD_TYPE=Release
+cmake .. -G "Ninja" -DCMAKE_BUILD_TYPE=Release
 if errorlevel 1 goto fail
 
 REM Build the project
+echo.
+echo [STEP] Building project...
 cmake --build .
 if errorlevel 1 goto fail
 
-REM Run tests
-ctest
+REM Run the tests with CTest
+echo.
+echo [STEP] Running tests...
+ctest --output-on-failure
 if errorlevel 1 goto fail
 
-endlocal
+echo.
+echo --- CI SUCCEEDED ---
+goto end
+
+:fail
+echo.
+echo !!! CI FAILED !!!
+exit /b 1
+
+:end
+exit /b 0
