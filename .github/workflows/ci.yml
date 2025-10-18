@@ -18,16 +18,29 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # ОНОВЛЕНО: Цей крок тепер має логіку для 32-бітної збірки на Windows
       - name: Build and Test with Ninja
         shell: bash
         run: |
           mkdir -p build
           cd build
           
-          # ОНОВЛЕНО: Додано -DCMAKE_BUILD_TYPE=Release
-          cmake .. -G "Ninja" -DCMAKE_BUILD_TYPE=Release
+          # Встановлюємо додаткові аргументи CMake
+          EXTRA_CMAKE_ARGS=""
+          if [[ "${{ runner.os }}" == "Windows" ]]; then
+            # Примусова 32-бітна (x86) збірка на Windows для вирішення помилки 0xc000007b
+            echo "Windows detected. Forcing 32-bit (Win32) build."
+            EXTRA_CMAKE_ARGS="-A Win32"
+          fi
           
+          # Конфігуруємо проєкт, передаючи додаткові аргументи
+          # Ми все ще збираємо в Release
+          cmake .. -G "Ninja" -DCMAKE_BUILD_TYPE=Release $EXTRA_CMAKE_ARGS
+          
+          # Збираємо проєкт
           cmake --build .
+          
+          # Запускаємо тести
           ctest --output-on-failure
 
       - name: Upload Artifacts

@@ -2,7 +2,7 @@
 cmake_minimum_required(VERSION 3.14)
 project(HelloWorld CXX)
 
-# ОНОВЛЕНО: Додайте цей блок для статичного зв'язування на Windows
+# Цей блок для статичного зв'язування (ЗАЛИШТЕ ЙОГО)
 if(MSVC)
   set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 endif()
@@ -12,26 +12,21 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # ----------------- Main Executable -----------------
-# Add the source files for your main application.
 add_executable(hello main.cpp math_operations.cpp)
 
 
 # ----------------- Testing -----------------
-# Enable testing with CTest.
 enable_testing()
-
-# Include the FetchContent module to handle external dependencies.
 include(FetchContent)
 
-# Declare the Google Test dependency from its GitHub repository.
 FetchContent_Declare(
   googletest
   GIT_REPOSITORY https://github.com/google/googletest.git
   GIT_TAG        main
 )
 
-# ADD THIS LINE to force GTest to use the same runtime library as your project.
-set(gtest_force_shared_crt ON)
+# ОНОВЛЕНО: ВИДАЛІТЬ ЦЕЙ РЯДОК
+# set(gtest_force_shared_crt ON)  <-- ВИДАЛІТЬ ЦЕ
 
 # Make the dependency available to your project.
 FetchContent_MakeAvailable(googletest)
