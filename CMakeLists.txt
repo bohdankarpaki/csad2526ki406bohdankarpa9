@@ -26,18 +26,22 @@ FetchContent_Declare(
   GIT_TAG        main
 )
 
-# ПЕРЕКОНАЙТЕСЬ, ЩО ЦЕЙ РЯДОК ВИДАЛЕНО АБО ЗАКОМЕНТОВАНО:
+# Переконайтесь, що 'gtest_force_shared_crt' видалено або закоментовано
 # set(gtest_force_shared_crt ON)
 
-# Make the dependency available to your project.
 FetchContent_MakeAvailable(googletest)
 
-# Add a new executable for your tests.
 add_executable(run_tests tests/unit_tests.cpp math_operations.cpp)
-
-# Link the test executable against Google Test.
 target_link_libraries(run_tests GTest::gtest_main)
 
-# Include the GoogleTest module and automatically discover tests.
-include(GoogleTest)
-gtest_discover_tests(run_tests)
+# --- ОНОВЛЕНО: Спрощений блок тестування ---
+
+# 1. Приберіть 'include(GoogleTest)' (або закоментуйте)
+# include(GoogleTest)
+
+# 2. Приберіть 'gtest_discover_tests(run_tests)' (або закоментуйте)
+# gtest_discover_tests(run_tests)
+
+# 3. Додайте замість них простий 'add_test'
+# Це просто запустить 'run_tests.exe'
+add_test(NAME UnitTests COMMAND run_tests)
