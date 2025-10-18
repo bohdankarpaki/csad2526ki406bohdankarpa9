@@ -10,7 +10,6 @@ if(MINGW)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static-libgcc -static-libstdc++")
   set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static")
 endif()
-# --- й╡межэ акнйс ---
 
 # ----------------- Main Executable -----------------
 # Add the source files for your main application.
