@@ -34,12 +34,13 @@ FetchContent_MakeAvailable(googletest)
 add_executable(run_tests tests/unit_tests.cpp math_operations.cpp)
 target_link_libraries(run_tests GTest::gtest_main)
 
-# --- ÎÍÎÂËÅÍÎ: Âèêîğèñòàííÿ Generator Expression ---
-# Ïğèáåğ³òü ñòàğ³ êîìàíäè (include(GoogleTest), gtest_discover_tests)
+# --- ÎÍÎÂËÅÍÎ: ÏÅĞÅÊÎÍÀÉÒÅÑÜ, ÙÎ Ö² ĞßÄÊÈ ÂÈÄÀËÅÍ² ---
+
+# ÂÈÄÀË²ÒÜ ÀÁÎ ÇÀÊÎÌÅÍÒÓÉÒÅ ÖÅÉ ĞßÄÎÊ:
 # include(GoogleTest)
+
+# ÂÈÄÀË²ÒÜ ÀÁÎ ÇÀÊÎÌÅÍÒÓÉÒÅ ÖÅÉ ĞßÄÎÊ:
 # gtest_discover_tests(run_tests)
 
-# Áóëî: add_test(NAME UnitTests COMMAND run_tests)
-# Ñòàëî:
-# Öå ãàğàíòóº, ùî CTest îòğèìàº ïîâíèé øëÿõ (íàïğ. "Release/run_tests.exe")
+# ÇÀËÈØ²ÒÜ Ò²ËÜÊÈ ÖÅÉ ĞßÄÎÊ ÄËß ÒÅÑÒÓÂÀÍÍß:
 add_test(NAME UnitTests COMMAND $<TARGET_FILE:run_tests>)
