@@ -2,16 +2,22 @@ name: CI Build and Test
 
 on:
   push:
-    branches: [ master, develop , 'feature/**']
+    # Запускати для гілок, що містять "develop" або "master"
+    branches:
+      - 'master'
+      - 'develop'
+      - 'feature/develop' # Додано для вашої гілки
   pull_request:
-    branches: [ master, develop ]
+    branches:
+      - 'master'
+      - 'develop'
 
 jobs:
-  build_and_test:
+  cross_build:
     name: Build & Test on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
-      fail-fast: false
+      fail-fast: false # Дозволяє всім збіркам завершитись, навіть якщо одна впаде
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
 
@@ -25,43 +31,54 @@ jobs:
           mkdir -p build
           cd build
           
-          # Налаштовуємо змінні
+          # Налаштовуємо змінні для різних ОС
           CONFIG="Release"
           CMAKE_ARGS=""
           BUILD_ARGS=""
           TEST_ARGS=""
 
           if [[ "${{ runner.os }}" == "Windows" ]]; then
-            # Windows = Multi-config (Visual Studio)
+            # Windows: Multi-config, 32-bit, і збірка цілі 'ALL_BUILD'
             echo "Windows detected. Configuring for 32-bit (Win32)."
             CMAKE_ARGS="-A Win32"
-            
-            # ОНОВЛЕНО: Ми збираємо 'ALL_BUILD', щоб пропустити 'RUN_TESTS'
             BUILD_ARGS="--config $CONFIG --target ALL_BUILD"
             TEST_ARGS="-C $CONFIG"
           else
-            # Linux/macOS = Single-config (Ninja)
+            # Linux/macOS: Single-config з Ninja
             echo "${{ runner.os }} detected. Configuring with Ninja generator."
             CMAKE_ARGS="-G Ninja -DCMAKE_BUILD_TYPE=$CONFIG"
-            BUILD_ARGS="" 
-            TEST_ARGS=""
           fi
           
           # 1. Конфігурація
+          echo "[STEP] Configuring..."
           cmake .. $CMAKE_ARGS
           
           # 2. Збірка
-          # Windows: cmake --build . --config Release --target ALL_BUILD
-          # Linux:   cmake --build .
+          echo "[STEP] Building..."
           cmake --build . $BUILD_ARGS
           
-          # 3. Тестування (запускається окремо, ПІСЛЯ збірки)
-          # Windows: ctest --output-on-failure -C Release
-          # Linux:   ctest --output-on-failure
+          # 3. Тестування
+          echo "[STEP] Testing..."
           ctest --output-on-failure $TEST_ARGS
 
-      - name: Upload Artifacts
+      # Етап 6.4: Завантаження артефактів для верифікації
+      - name: Upload Windows Artifact (hello.exe)
+        if: runner.os == 'Windows'
         uses: actions/upload-artifact@v4
         with:
-          name: build-results-${{ matrix.os }}
-          path: build/
+          name: hello-windows-32bit
+          path: build/Release/hello.exe # Завантажуємо тільки сам .exe
+
+      - name: Upload Linux Artifact
+        if: runner.os == 'Linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: hello-linux
+          path: build/hello # Шлях для single-config
+
+      - name: Upload macOS Artifact
+        if: runner.os == 'macOS'
+        uses: actions/upload-artifact@v4
+        with:
+          name: hello-macos
+          path: build/hello # Шлях для single-config

@@ -1,32 +1,28 @@
 #!/bin/bash
+# Надайте права: chmod +x ci.sh
 
-# Exit immediately if a command exits with a non-zero status.
+# Зупинити скрипт при першій помилці
 set -e
 
-echo "--- Starting CI Build and Test ---"
-echo
+echo "--- Starting CI Script for Linux/macOS ---"
 
-# 1. Create the build directory if it doesn't exist.
+# 1. Створення/очищення каталогу
+rm -rf build
 mkdir -p build
 
-# 2. Change into the build directory.
+# 2. Перехід у каталог
 cd build
 
-# 3. Configure the project using CMake and the Ninja generator.
+# 3. Конфігурування (Single-config з Ninja + Release)
 echo "[STEP] Configuring project..."
-# ОНОВЛЕНО: Додано -DCMAKE_BUILD_TYPE=Release
 cmake .. -G "Ninja" -DCMAKE_BUILD_TYPE=Release
 
-# 4. Build the project.
-echo
+# 4. Білдування
 echo "[STEP] Building project..."
 cmake --build .
 
-# 5. Run the tests with CTest.
-echo
+# 5. Запуск тестів
 echo "[STEP] Running tests..."
 ctest --output-on-failure
 
-# 6. If all previous commands succeeded, print the success message.
-echo
 echo "--- CI SUCCEEDED ---"

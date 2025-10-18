@@ -2,8 +2,8 @@
 cmake_minimum_required(VERSION 3.14)
 project(HelloWorld CXX)
 
-# ЗАЛИШІТЬ ЦЕЙ БЛОК:
-# Він вмикає статичне зв'язування (/MT), щоб .exe був портативним
+# ВАЖЛИВО: Цей блок вмикає статичне зв'язування (/MT) на Windows.
+# Це вирішує вашу початкову помилку 0xc000007b.
 if(MSVC)
   set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 endif()
@@ -26,7 +26,7 @@ FetchContent_Declare(
   GIT_TAG        main
 )
 
-# Переконайтесь, що 'gtest_force_shared_crt' видалено або закоментовано
+# ВАЖЛИВО: Переконайтесь, що цей рядок видалено або закоментовано
 # set(gtest_force_shared_crt ON)
 
 FetchContent_MakeAvailable(googletest)
@@ -34,13 +34,13 @@ FetchContent_MakeAvailable(googletest)
 add_executable(run_tests tests/unit_tests.cpp math_operations.cpp)
 target_link_libraries(run_tests GTest::gtest_main)
 
-# --- ОНОВЛЕНО: ПЕРЕКОНАЙТЕСЬ, ЩО ЦІ РЯДКИ ВИДАЛЕНІ ---
+# --- ФІНАЛЬНИЙ БЛОК ТЕСТУВАННЯ ---
 
-# ВИДАЛІТЬ АБО ЗАКОМЕНТУЙТЕ ЦЕЙ РЯДОК:
+# ВАЖЛИВО: ВИДАЛІТЬ або закоментуйте ці два рядки.
+# Вони є причиною помилки MSB3073.
 # include(GoogleTest)
-
-# ВИДАЛІТЬ АБО ЗАКОМЕНТУЙТЕ ЦЕЙ РЯДОК:
 # gtest_discover_tests(run_tests)
 
-# ЗАЛИШІТЬ ТІЛЬКИ ЦЕЙ РЯДОК ДЛЯ ТЕСТУВАННЯ:
+# ВАЖЛИВО: ЗАЛИШІТЬ ТІЛЬКИ ЦЕЙ РЯДОК.
+# Він правильно реєструє тест, не створюючи конфліктів при збірці.
 add_test(NAME UnitTests COMMAND $<TARGET_FILE:run_tests>)

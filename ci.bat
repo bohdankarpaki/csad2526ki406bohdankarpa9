@@ -1,33 +1,30 @@
 @echo off
 setlocal
 
-echo --- Starting CI Build and Test ---
-echo.
+echo --- Starting CI Script for Windows ---
 
-REM Create build directory if it doesn't exist
-if not exist build mkdir build
+REM 1. Створення/очищення каталогу
+if exist build rmdir /s /q build
+mkdir build
 if errorlevel 1 goto fail
 
-REM Change into build directory
+REM 2. Перехід у каталог
 cd build
 if errorlevel 1 goto fail
 
-REM Configure the project using CMake and the Ninja generator
+REM 3. Конфігурування (Multi-config + 32-bit для сумісності)
 echo [STEP] Configuring project...
-REM ОНОВЛЕНО: Додано -DCMAKE_BUILD_TYPE=Release
-cmake .. -G "Ninja" -DCMAKE_BUILD_TYPE=Release
+cmake .. -A Win32
 if errorlevel 1 goto fail
 
-REM Build the project
-echo.
+REM 4. Білдування (Тільки 'ALL_BUILD', щоб пропустити 'RUN_TESTS' під час збірки)
 echo [STEP] Building project...
-cmake --build .
+cmake --build . --config Release --target ALL_BUILD
 if errorlevel 1 goto fail
 
-REM Run the tests with CTest
-echo.
+REM 5. Запуск тестів (Окремо, після збірки)
 echo [STEP] Running tests...
-ctest --output-on-failure
+ctest --output-on-failure -C Release
 if errorlevel 1 goto fail
 
 echo.
